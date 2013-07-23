@@ -40,9 +40,13 @@ OpenStack Swift threaded operation utility for Uploading, Downloading and Deleti
 ## Examples
 
 ```shell
-python posthaste.py -c example -d /path/to/some/dir/ -r DFW -u $OS_USERNAME -p $OS_PASSWORD -t 100
+python posthaste.py -c example -r DFW -u $OS_USERNAME -p $OS_PASSWORD -t 100 upload /path/to/some/dir/
 ```
 
 ```shell
-python posthaste.py -c example -r DFW -u $OS_USERNAME -p $OS_PASSWORD -t 100
+python posthaste.py -c example -r DFW -u $OS_USERNAME -p $OS_PASSWORD -t 100 download /path/to/some/dir/
+```
+
+```shell
+python posthaste.py -c example -r DFW -u $OS_USERNAME -p $OS_PASSWORD -t 100 delete
 ```
