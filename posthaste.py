@@ -73,7 +73,8 @@ def handle_args():
                                           'directory from the specified '
                                           'container')
     download.set_defaults(action='download')
-    download.add_argument('directory', help='The directory to upload')
+    download.add_argument('directory',
+                          help='The directory to download files to')
 
     args = parser.parse_args()
     return args
