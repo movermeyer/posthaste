@@ -192,7 +192,7 @@ def handle_delete(endpoint, container, objects, token, threads, verbose):
                 r = s.delete('%s/%s/%s' % (endpoint, container, f),
                              headers={'X-Auth-Token': token})
             except:
-                e = sys.exc_info()[0]
+                e = sys.exc_info()[1]
                 errors.append({
                     'name': f,
                     'container': container,
@@ -248,7 +248,7 @@ def handle_upload(directory, endpoint, container, files, token, threads,
                           (endpoint, container, fobj['name']), data=body,
                           headers={'X-Auth-Token': token})
             except:
-                e = sys.exc_info()[0]
+                e = sys.exc_info()[1]
                 errors.append({
                     'name': fobj['name'],
                     'container': container,
@@ -314,7 +314,7 @@ def handle_download(directory, endpoint, container, objects, token, threads,
                             break
                         f.write(block)
             except:
-                e = sys.exc_info()[0]
+                e = sys.exc_info()[1]
                 errors.append({
                     'name': filename,
                     'container': container,
@@ -381,7 +381,7 @@ if __name__ == '__main__':
     try:
         shell()
     except:
-        e = sys.exc_info()[0]
-        raise SystemExit(e)
+        e = sys.exc_info()[1]
+        raise SystemExit(1)
 
 # vim:set ts=4 sw=4 expandtab:
