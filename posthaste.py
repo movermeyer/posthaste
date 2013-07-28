@@ -374,7 +374,7 @@ def shell():
         print '\nErrors:'
         print json.dumps(errors, indent=4)
     else:
-            print '\nCompleted Successfully'
+        print '\nCompleted Successfully'
 
 
 if __name__ == '__main__':
