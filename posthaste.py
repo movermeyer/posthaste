@@ -102,13 +102,15 @@ class Posthaste(object):
                     f(*args, **kwargs)
                 except AuthenticationError:
                     with self.semaphore:
-                        print "Thread session died; attempting re-authentication."
+                        print ("Thread session died; attempting "
+                               "re-authentication.")
                         self._authenticate()
                         self._num_auths += 1
                         time.sleep(1)
                 if self._num_auths > self._args.threads + 10:
                     sys.stderr.write("Exceeded limit of %s authentication "
-                                     "attempts; aborting.\n" % self._args.threads + 10)
+                                     "attempts; aborting.\n" %
+                                     self._args.threads + 10)
                     gevent.hub.get_hub().parent.throw(SystemExit())
                 else:
                     break
@@ -282,8 +284,10 @@ class Posthaste(object):
                     print 'Uploading %s' % fobj['name']
                 try:
                     r = s.put('%s/%s/%s' %
-                              (self.endpoint, container, fobj['name']), data=body,
-                              headers={'X-Auth-Token': self.token})
+                              (self.endpoint,  container,  fobj['name']),
+                              data=body, headers={
+                                  'X-Auth-Token': self.token
+                              })
                 except:
                     e = sys.exc_info()[1]
                     errors.append({
@@ -346,8 +350,12 @@ class Posthaste(object):
                         if e.errno != 17:
                             raise
                     with open(path, 'wb+') as f:
-                        r = s.get('%s/%s/%s' % (self.endpoint, container, filename),
-                                  headers={'X-Auth-Token': self.token}, stream=True)
+                        r = s.get('%s/%s/%s' % (self.endpoint,
+                                                container,
+                                                filename),
+                                  headers={
+                                      'X-Auth-Token': self.token
+                                  }, stream=True)
                         if r.status_code == 401:
                             raise AuthenticationError
                         for block in r.iter_content(4096):
