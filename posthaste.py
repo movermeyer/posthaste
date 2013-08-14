@@ -190,14 +190,14 @@ class Posthaste(object):
 
         self.files = files
 
-    def get_objects(self, endpoint, container):
+    def get_objects(self, container):
         headers = {
             'Accept': 'application/json',
             'X-Auth-Token': self.token
         }
 
         all_objects = []
-        r = requests.get('%s/%s?format=json' % (endpoint, container),
+        r = requests.get('%s/%s?format=json' % (self.endpoint, container),
                          headers=headers)
 
         if r.status_code != 200:
@@ -207,7 +207,7 @@ class Posthaste(object):
         all_objects.extend(objects)
         while len(objects):
             r = requests.get('%s/%s?format=json&marker=%s' %
-                             (endpoint, container, objects[-1]['name']),
+                             (self.endpoint, container, objects[-1]['name']),
                              headers=headers)
 
             if r.status_code != 200:
