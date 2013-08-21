@@ -4,8 +4,9 @@ OpenStack Swift threaded operation utility for Uploading, Downloading and Deleti
 
 ## Usage
 
-    usage: posthaste.py [-h] -c CONTAINER -r {DFW,ORD,LON} [-t THREADS]
-                        [-u USERNAME] [-p PASSWORD] [-i {rackspace,keystone}] [-v]
+    usage: posthaste.py [-h] -c CONTAINER -r {DFW,ORD,LON} [--internal]
+                        [-t THREADS] [-u USERNAME] [-p PASSWORD]
+                        [-i {rackspace,keystone}] [-v]
                         {delete,upload,download} ...
 
     positional arguments:
@@ -22,6 +23,8 @@ OpenStack Swift threaded operation utility for Uploading, Downloading and Deleti
       -r {DFW,ORD,LON}, --region {DFW,ORD,LON}
                             Region where the specified container exists. Default
                             DFW
+      --internal            Use the internalURL (ServiceNet) for communication and
+                            operations
       -t THREADS, --threads THREADS
                             Number of concurrent threads used for deletion.
                             Default 10

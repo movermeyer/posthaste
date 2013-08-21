@@ -39,6 +39,10 @@ def handle_args():
                         choices=('DFW', 'ORD', 'LON'),
                         help='Region where the specified container exists. '
                              'Default DFW')
+    parser.add_argument('--internal', required=False, default=False,
+                        action='store_true',
+                        help='Use the internalURL (ServiceNet) for '
+                             'communication and operations')
     parser.add_argument('-t', '--threads', required=False, type=int,
                         default=10,
                         help='Number of concurrent threads used for '
@@ -155,12 +159,17 @@ class Posthaste(object):
         token = auth_response['access']['token']['id']
         service_catalog = auth_response['access']['serviceCatalog']
 
+        if args.internal:
+            url_type = 'internalURL'
+        else:
+            url_type = 'publicURL'
+
         endpoint = None
         for service in service_catalog:
             if service['name'] == 'cloudFiles':
                 for ep in service['endpoints']:
                     if ep['region'] == args.region:
-                        endpoint = ep['publicURL']
+                        endpoint = ep[url_type]
                         break
                 break
         if not endpoint:
