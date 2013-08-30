@@ -35,10 +35,11 @@ def handle_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--container', required=True,
                         help='The name container to operate on')
-    parser.add_argument('-r', '--region', required=True, default='DFW',
-                        choices=('DFW', 'ORD', 'LON'),
+    parser.add_argument('-r', '--region', required=False,
+                        default=os.getenv('OS_REGION_NAME', 'DFW'),
                         help='Region where the specified container exists. '
-                             'Default DFW')
+                             'Defaults to OS_REGION_NAME environment variable '
+                             'with a fallback to DFW')
     parser.add_argument('--internal', required=False, default=False,
                         action='store_true',
                         help='Use the internalURL (ServiceNet) for '
@@ -56,14 +57,18 @@ def handle_args():
                         help='API Key or password to authenticate with. '
                              'Defaults to OS_PASSWORD environment variable')
     parser.add_argument('-i', '--identity', required=False,
-                        default='rackspace', choices=('rackspace', 'keystone'),
-                        help='Identitiy type to auth with. Default rackspace')
+                        default=os.getenv('OS_AUTH_SYSTEM', 'rackspace'),
+                        choices=('rackspace', 'keystone'),
+                        help='Identitiy type to auth with. Defaults to '
+                             'OS_AUTH_SYSTEM environment variable with a '
+                             'fallback to rackspace')
     rs_auth_url = 'https://identity.api.rackspacecloud.com/v2.0'
     auth_url = os.getenv('OS_AUTH_URL', rs_auth_url)
     parser.add_argument('-a', '--auth-url', required=False,
                         default=auth_url,
                         help='Auth URL to use. Defaults to OS_AUTH_URL '
-                             'environment variable or %s' % rs_auth_url)
+                             'environment variable with a fallback to '
+                             '%s' % rs_auth_url)
     parser.add_argument('-v', '--verbose', required=False, action='count',
                         help='Enable verbosity. Supply multiple times for '
                              'additional verbosity. 1) Show Thread '
@@ -141,7 +146,7 @@ class Posthaste(object):
                     }
                 }
             }
-        else:
+        elif args.identity == 'keystone':
             auth_data = {
                 'auth': {
                     'passwordCredentials': {
@@ -150,6 +155,9 @@ class Posthaste(object):
                     }
                 }
             }
+        else:
+            raise SystemExit('Unsupported identity/OS_AUTH_SYSTEM provided')
+
         headers = {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
