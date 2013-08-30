@@ -117,14 +117,14 @@ class Posthaste(object):
                     f(*args, **kwargs)
                 except AuthenticationError:
                     with self.semaphore:
-                        print ("Thread session died; attempting "
-                               "re-authentication.")
+                        print ('Thread session died; attempting '
+                               're-authentication.')
                         self._authenticate()
                         self._num_auths += 1
                         time.sleep(1)
                 if self._num_auths > self._args.threads + 10:
-                    sys.stderr.write("Exceeded limit of %s authentication "
-                                     "attempts; aborting.\n" %
+                    sys.stderr.write('Exceeded limit of %s authentication '
+                                     'attempts; aborting.\n' %
                                      self._args.threads + 10)
                     gevent.hub.get_hub().parent.throw(SystemExit())
                 else:
@@ -333,7 +333,7 @@ class Posthaste(object):
             if verbose:
                 print 'Completed thread %s' % i
 
-        print "Uploading."
+        print 'Uploading.'
         file_chunks = collections.defaultdict(list)
         thread_mark = threads
         files_per_thread = len(self.files) / threads / 3
