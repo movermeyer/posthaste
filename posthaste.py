@@ -172,7 +172,8 @@ class Posthaste(object):
 
         endpoint = None
         for service in service_catalog:
-            if service['name'] == 'cloudFiles':
+            if (service['type'] == 'object-store' and
+                    service['name'] in ['cloudFiles', 'swift']):
                 for ep in service['endpoints']:
                     if ep['region'] == args.region:
                         endpoint = ep[url_type]
