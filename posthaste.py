@@ -49,15 +49,21 @@ def handle_args():
                              'deletion. Default 10')
     parser.add_argument('-u', '--username', required=False,
                         default=os.getenv('OS_USERNAME'),
-                        help='Username to authenticate with. Default '
+                        help='Username to authenticate with. Defaults to '
                              'OS_USERNAME environment variable')
     parser.add_argument('-p', '--password', required=False,
                         default=os.getenv('OS_PASSWORD'),
                         help='API Key or password to authenticate with. '
-                             'Default OS_PASSWORD environment variable')
+                             'Defaults to OS_PASSWORD environment variable')
     parser.add_argument('-i', '--identity', required=False,
                         default='rackspace', choices=('rackspace', 'keystone'),
                         help='Identitiy type to auth with. Default rackspace')
+    rs_auth_url = 'https://identity.api.rackspacecloud.com/v2.0'
+    auth_url = os.getenv('OS_AUTH_URL', rs_auth_url)
+    parser.add_argument('-a', '--auth-url', required=False,
+                        default=auth_url,
+                        help='Auth URL to use. Defaults to OS_AUTH_URL '
+                             'environment variable or %s' % rs_auth_url)
     parser.add_argument('-v', '--verbose', required=False, action='count',
                         help='Enable verbosity. Supply multiple times for '
                              'additional verbosity. 1) Show Thread '
@@ -124,7 +130,7 @@ class Posthaste(object):
     def _authenticate(self, args=None):
         if not args:
             args = self._args
-        auth_url = 'https://identity.api.rackspacecloud.com/v2.0/tokens'
+        auth_url = os.path.join(args.auth_url, 'tokens')
 
         if args.identity == 'rackspace':
             auth_data = {
