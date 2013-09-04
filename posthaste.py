@@ -18,6 +18,7 @@
 import gevent
 from gevent import monkey
 from gevent.pool import Pool
+from gevent.queue import Queue
 monkey.patch_all()
 
 import sys
