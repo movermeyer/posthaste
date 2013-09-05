@@ -284,7 +284,7 @@ class Posthaste(object):
             i += 1
             if len(files[thread_mark - 1]) == files_per_thread:
                 thread_mark += threads
-                files_per_thread = files_per_thread / 2
+                files_per_thread /= 2
                 i = 0
             if i == thread_mark:
                 i = 0
@@ -344,7 +344,7 @@ class Posthaste(object):
             i += 1
             if len(file_chunks[thread_mark - 1]) == files_per_thread:
                 thread_mark += threads
-                files_per_thread = files_per_thread / 2
+                files_per_thread /= 2
                 i = 0
             if i == thread_mark:
                 i = 0
@@ -415,7 +415,7 @@ class Posthaste(object):
             i += 1
             if len(files[thread_mark - 1]) == files_per_thread:
                 thread_mark += threads
-                files_per_thread = files_per_thread / 2
+                files_per_thread /= 2
                 i = 0
             if i == thread_mark:
                 i = 0
