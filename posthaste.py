@@ -17,9 +17,9 @@
 
 import gevent
 from gevent import monkey
+monkey.patch_all()
 from gevent.pool import Pool
 from gevent.queue import Queue
-monkey.patch_all()
 
 import sys
 import json
@@ -70,6 +70,11 @@ def handle_args():
                         help='Auth URL to use. Defaults to OS_AUTH_URL '
                              'environment variable with a fallback to '
                              '%s' % rs_auth_url)
+    parser.add_argument('-q', '--queue', required=False, action='store_true',
+                        default=False,
+                        help='Use a queue to distribute work rather than '
+                             'launching threads using the traditional '
+                             'work distribution algorithm.')
     parser.add_argument('-v', '--verbose', required=False, action='count',
                         help='Enable verbosity. Supply multiple times for '
                              'additional verbosity. 1) Show Thread '
@@ -109,6 +114,10 @@ class Posthaste(object):
         self._authenticate(args)
         self._num_auths = 0
         self.semaphore = threading.Semaphore()
+        self.use_queue = False
+        if args.queue:
+            self._queue = Queue()
+            self.use_queue = True
 
     def requires_auth(self, f):
         @functools.wraps(f)
@@ -213,6 +222,14 @@ class Posthaste(object):
         if sized_sort:
             files.sort(key=lambda d: d['size'], reverse=True)
 
+        if self.use_queue:
+            if self._args.verbose:
+                print "Starting queueing of files."
+            for file in files:
+                if self._args.verbose > 1:
+                    print "Queueing %s"
+                self._queue.put_nowait(file)
+
         self.files = files
 
     def get_objects(self, container):
@@ -240,7 +257,11 @@ class Posthaste(object):
 
             objects = r.json()
             all_objects.extend(objects)
-        self.objects = all_objects
+        if self.use_queue:
+            for obj in all_objects:
+                self._queue.put_nowait(obj['name'])
+        else:
+            self.objects = all_objects
 
     def handle_delete(self, container, threads, verbose):
         @self.requires_auth
@@ -360,11 +381,8 @@ class Posthaste(object):
     def handle_download(self, directory, container, threads, verbose):
         @self.requires_auth
         def _download(i, files, directory, errors):
-            if verbose:
-                print 'Starting thread %s' % i
-            s = requests.Session()
-            directory = os.path.abspath(directory)
-            for filename in files:
+            def _get(filename, s, directory):
+                directory = os.path.abspath(directory)
                 if verbose > 1:
                     print 'Downloading %s' % filename
                 try:
@@ -403,27 +421,51 @@ class Posthaste(object):
                             'headers': r.headers,
                             'response': json.loads(r.text)
                         })
+
+            if self.use_queue:
+                assert isinstance(files, Queue)
+            if verbose:
+                print 'Starting thread %s' % i
+            s = requests.Session()
+
+            if self.use_queue:
+                while True:
+                    try:
+                        filename = files.get(timeout=2)
+                    except gevent.queue.Empty:
+                        break
+                    else:
+                        _get(filename, s, directory)
+            else:
+                for filename in files:
+                    _get(filename, s, directory)
+
             if verbose:
                 print 'Completed thread %s' % i
 
-        files = collections.defaultdict(list)
-        thread_mark = threads
-        files_per_thread = len(self.objects) / threads / 3
-        i = 0
-        for o in self.objects:
-            files[i].append(o['name'])
-            i += 1
-            if len(files[thread_mark - 1]) == files_per_thread:
-                thread_mark += threads
-                files_per_thread /= 2
-                i = 0
-            if i == thread_mark:
-                i = 0
+        if not self.use_queue:
+            files = collections.defaultdict(list)
+            thread_mark = threads
+            files_per_thread = len(self.objects) / threads / 3
+            i = 0
+            for o in self.objects:
+                files[i].append(o['name'])
+                i += 1
+                if len(files[thread_mark - 1]) == files_per_thread:
+                    thread_mark += threads
+                    files_per_thread /= 2
+                    i = 0
+                if i == thread_mark:
+                    i = 0
 
-        pool = Pool(size=threads)
+        pool = Pool()
         errors = []
-        for i, file_chunk in files.iteritems():
-            pool.spawn(_download, i, file_chunk, directory, errors)
+        if self.use_queue:
+            for i in xrange(threads):
+                pool.spawn(_download, i, self._queue, directory, errors)
+        else:
+            for i, file_chunk in files.iteritems():
+                pool.spawn(_download, i, file_chunk, directory, errors)
         pool.join()
         return errors
 
@@ -455,6 +497,7 @@ if __name__ == '__main__':
     try:
         shell()
     except:
+        raise
         e = sys.exc_info()[1]
         raise SystemExit(e)
 
