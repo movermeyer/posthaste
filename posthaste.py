@@ -229,14 +229,14 @@ class Posthaste(object):
         if self.use_queue:
             for file in files:
                 if self._args.verbose > 1:
-                    print "Queueing %s"
+                    print "Queueing %s" % file
                 self._queue.put_nowait(file)
         else:
         self.files = files
 
     def get_objects(self, container, verbose):
         if verbose:
-            sys.stdout.println("Querying API for objects...")
+            sys.stdout.write("Querying API for objects...")
             sys.stdout.flush()
         headers = {
             'Accept': 'application/json',
@@ -275,10 +275,7 @@ class Posthaste(object):
     def handle_delete(self, container, threads, verbose):
         @self.requires_auth
         def _delete(i, files, errors):
-            if verbose:
-                print 'Starting thread %s' % i
-            s = requests.Session()
-            for f in files:
+            def _del(f):
                 if verbose > 1:
                     print 'Deleting %s' % f
                 try:
@@ -303,8 +300,29 @@ class Posthaste(object):
                             'response': json.loads(r.text)
                         })
             if verbose:
+                print 'Starting thread %s' % i
+            s = requests.Session()
+            if self.use_queue:
+                assert isinstance(files, Queue)
+                while True:
+                    try:
+                        f = files.get(timeout=2)
+                    except gevent.queue.Empty:
+                        break
+                    else:
+                        _del(f)
+            else:
+                for f in files:
+                    _del(f)
+            if verbose:
                 print 'Completed thread %s' % i
 
+        pool = Pool(size=threads)
+        errors = []
+        if self.use_queue:
+            for i in xrange(threads):
+                pool.spawn(_delete, i, self._queue, errors)
+        else:
         files = collections.defaultdict(list)
         thread_mark = threads
         files_per_thread = len(self.objects) / threads / 3
@@ -318,9 +336,6 @@ class Posthaste(object):
                 i = 0
             if i == thread_mark:
                 i = 0
-
-        pool = Pool(size=threads)
-        errors = []
         for i, file_chunk in files.iteritems():
             pool.spawn(_delete, i, file_chunk, errors)
         pool.join()
