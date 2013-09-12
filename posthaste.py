@@ -344,10 +344,7 @@ class Posthaste(object):
     def handle_upload(self, directory, container, threads, verbose):
         @self.requires_auth
         def _upload(i, files, errors):
-            if verbose:
-                print 'Starting thread %s' % i
-            s = requests.Session()
-            for fobj in files:
+            def _put(fobj):
                 with open(fobj['path'], 'rb') as f:
                     body = f.read()
                 if verbose > 1:
@@ -377,9 +374,30 @@ class Posthaste(object):
                             'response': json.loads(r.text)
                         })
             if verbose:
+                print 'Starting thread %s' % i
+            s = requests.Session()
+            if self.use_queue:
+                assert isinstance(files, Queue)
+                while True:
+                    try:
+                        file = files.get(timeout=2)
+                    except gevent.queue.Empty:
+                        break
+                    else:
+                        _put(file)
+            else:
+                for file in self.files:
+                    _put(file)
+
+            if verbose:
                 print 'Completed thread %s' % i
 
-        print 'Uploading.'
+        pool = Pool(size=threads)
+        errors = []
+        if self.use_queue:
+            for i in xrange(threads):
+                pool.spawn(_upload, i, self._queue, errors)
+        else:
         file_chunks = collections.defaultdict(list)
         thread_mark = threads
         files_per_thread = len(self.files) / threads / 3
@@ -393,10 +411,6 @@ class Posthaste(object):
                 i = 0
             if i == thread_mark:
                 i = 0
-
-        pool = Pool(size=threads)
-
-        errors = []
         for i, file_chunk in file_chunks.iteritems():
             pool.spawn(_upload, i, file_chunk, errors)
         pool.join()
