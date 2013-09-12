@@ -203,7 +203,7 @@ class Posthaste(object):
         self.token = token
         self.endpoint = endpoint
 
-    def get_files(self, directory, sized_sort=True):
+    def get_files(self, directory, verbose, sized_sort=True):
         def _walker(arg, dirname, fnames):
             for fname in fnames:
                 full_path = os.path.join(dirname, fname)
@@ -216,23 +216,28 @@ class Posthaste(object):
                     'name': obj_name,
                     'size': obj_size
                 })
-
+        if verbose:
+            sys.stdout.write("Scanning the filesystem for files...")
+            sys.stdout.flush()
         files = []
         os.path.walk(directory, _walker, None)
+        if verbose:
+            print "Done!"
         if sized_sort:
             files.sort(key=lambda d: d['size'], reverse=True)
 
         if self.use_queue:
-            if self._args.verbose:
-                print "Starting queueing of files."
             for file in files:
                 if self._args.verbose > 1:
                     print "Queueing %s"
                 self._queue.put_nowait(file)
-
+        else:
         self.files = files
 
-    def get_objects(self, container):
+    def get_objects(self, container, verbose):
+        if verbose:
+            sys.stdout.println("Querying API for objects...")
+            sys.stdout.flush()
         headers = {
             'Accept': 'application/json',
             'X-Auth-Token': self.token
@@ -257,11 +262,15 @@ class Posthaste(object):
 
             objects = r.json()
             all_objects.extend(objects)
+
         if self.use_queue:
             for obj in all_objects:
                 self._queue.put_nowait(obj['name'])
         else:
             self.objects = all_objects
+
+        if verbose:
+            print "Done!"
 
     def handle_delete(self, container, threads, verbose):
         @self.requires_auth
@@ -474,11 +483,11 @@ def shell():
     args = handle_args()
     posthaste = Posthaste(args)
     if args.action == 'upload':
-        posthaste.get_files(args.directory)
+        posthaste.get_files(args.directory, args.verbose)
         errors = posthaste.handle_upload(args.directory, args.container,
                                          args.threads, args.verbose)
     elif args.action == 'download':
-        posthaste.get_objects(args.container)
+        posthaste.get_objects(args.container, args.verbose)
         errors = posthaste.handle_download(args.directory, args.container,
                                            args.threads, args.verbose)
     elif args.action == 'delete':
