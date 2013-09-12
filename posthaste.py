@@ -481,7 +481,12 @@ class Posthaste(object):
             if verbose:
                 print 'Completed thread %s' % i
 
-        if not self.use_queue:
+        pool = Pool(size=threads)
+        errors = []
+        if self.use_queue:
+            for i in xrange(threads):
+                pool.spawn(_download, i, self._queue, directory, errors)
+        else:
             files = collections.defaultdict(list)
             thread_mark = threads
             files_per_thread = len(self.objects) / threads / 3
@@ -495,13 +500,6 @@ class Posthaste(object):
                     i = 0
                 if i == thread_mark:
                     i = 0
-
-        pool = Pool()
-        errors = []
-        if self.use_queue:
-            for i in xrange(threads):
-                pool.spawn(_download, i, self._queue, directory, errors)
-        else:
             for i, file_chunk in files.iteritems():
                 pool.spawn(_download, i, file_chunk, directory, errors)
         pool.join()
@@ -520,7 +518,7 @@ def shell():
         errors = posthaste.handle_download(args.directory, args.container,
                                            args.threads, args.verbose)
     elif args.action == 'delete':
-        posthaste.get_objects(args.container)
+        posthaste.get_objects(args.container, args.verbose)
         errors = posthaste.handle_delete(args.container, args.threads,
                                          args.verbose)
 
