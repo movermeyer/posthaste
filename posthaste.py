@@ -383,10 +383,21 @@ class Posthaste(object):
     def handle_download(self, directory, container, threads, verbose):
         @self.requires_auth
         def _download(i, files, directory, errors):
-            def _get(filename, s, directory):
+            if verbose:
+                print 'Starting thread %s' % i
+            while True:
+                try:
+                    filename = files.get_nowait()
+                except gevent.queue.Empty:
+                    if verbose:
+                        if verbose > 1:
+                            print "Thread %3s: queue empty" % i
+                        print "Thread %3s: exiting" % i
+                    raise gevent.GreenletExit
+                else:
                 directory = os.path.abspath(directory)
                 if verbose > 1:
-                    print 'Downloading %s' % filename
+                        print 'Thread %3s: downloadng %s' % (i, filename)
                 try:
                     path = os.path.join(directory, filename)
                     try:
@@ -423,49 +434,17 @@ class Posthaste(object):
                             'headers': r.headers,
                             'response': json.loads(r.text)
                         })
+                finally:
+                    if verbose > 1:
+                        print ("Thread %3s: download complete for %s"
+                               % (i, filename))
 
-            if self.use_queue:
-                assert isinstance(files, Queue)
-            if verbose:
-                print 'Starting thread %s' % i
             s = requests.Session()
-
-            if self.use_queue:
-                while True:
-                    try:
-                        filename = files.get(timeout=2)
-                    except gevent.queue.Empty:
-                        break
-                    else:
-                        _get(filename, s, directory)
-            else:
-                for filename in files:
-                    _get(filename, s, directory)
-
-            if verbose:
-                print 'Completed thread %s' % i
 
         pool = Pool(size=threads)
         errors = []
-        if self.use_queue:
             for i in xrange(threads):
                 pool.spawn(_download, i, self._queue, directory, errors)
-        else:
-            files = collections.defaultdict(list)
-            thread_mark = threads
-            files_per_thread = len(self.objects) / threads / 3
-            i = 0
-            for o in self.objects:
-                files[i].append(o['name'])
-                i += 1
-                if len(files[thread_mark - 1]) == files_per_thread:
-                    thread_mark += threads
-                    files_per_thread /= 2
-                    i = 0
-                if i == thread_mark:
-                    i = 0
-            for i, file_chunk in files.iteritems():
-                pool.spawn(_download, i, file_chunk, directory, errors)
         pool.join()
         return errors
 
