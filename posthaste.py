@@ -275,9 +275,20 @@ class Posthaste(object):
     def handle_delete(self, container, threads, verbose):
         @self.requires_auth
         def _delete(i, files, errors):
-            def _del(f):
+            if verbose:
+                print 'Thread %3s: starting' % i
+            while True:
+                try:
+                    f = files.get_nowait()
+                except gevent.queue.Empty:
+                    if verbose:
                 if verbose > 1:
-                    print 'Deleting %s' % f
+                            print "Thread %3s: queue empty" % i
+                        print "Thread %3s: exiting" % i
+                    raise gevent.GreenletExit
+                else:
+                    if verbose > 1:
+                        print 'Thread %3s: deleting %s' % (i, f)
                 try:
                     r = s.delete('%s/%s/%s' % (self.endpoint, container, f),
                                  headers={'X-Auth-Token': self.token})
@@ -299,45 +310,17 @@ class Posthaste(object):
                             'headers': r.headers,
                             'response': json.loads(r.text)
                         })
-            if verbose:
-                print 'Starting thread %s' % i
+                    finally:
+                        if verbose > 1:
+                            print ("Thread %3s: delete complete for %s"
+                                   % (i, f))
+
             s = requests.Session()
-            if self.use_queue:
-                assert isinstance(files, Queue)
-                while True:
-                    try:
-                        f = files.get(timeout=2)
-                    except gevent.queue.Empty:
-                        break
-                    else:
-                        _del(f)
-            else:
-                for f in files:
-                    _del(f)
-            if verbose:
-                print 'Completed thread %s' % i
 
         pool = Pool(size=threads)
         errors = []
-        if self.use_queue:
             for i in xrange(threads):
                 pool.spawn(_delete, i, self._queue, errors)
-        else:
-            files = collections.defaultdict(list)
-            thread_mark = threads
-            files_per_thread = len(self.objects) / threads / 3
-            i = 0
-            for o in self.objects:
-                files[i].append(o['name'])
-                i += 1
-                if len(files[thread_mark - 1]) == files_per_thread:
-                    thread_mark += threads
-                    files_per_thread /= 2
-                    i = 0
-                if i == thread_mark:
-                    i = 0
-            for i, file_chunk in files.iteritems():
-                pool.spawn(_delete, i, file_chunk, errors)
         pool.join()
         return errors
 
