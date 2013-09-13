@@ -33,7 +33,11 @@ import threading
 
 
 def handle_args():
-    parser = argparse.ArgumentParser()
+    prog = "Posthaste"
+    desc = ("Gevent-based, multithreaded tool for interacting with OpenStack "
+            "Swift and Rackspace Cloud Files")
+    parser = argparse.ArgumentParser(prog=prog,
+                                     description=desc)
     parser.add_argument('-c', '--container', required=True,
                         help='The name container to operate on')
     parser.add_argument('-r', '--region', required=False,
@@ -114,7 +118,7 @@ class Posthaste(object):
         self._authenticate(args)
         self._num_auths = 0
         self.semaphore = threading.Semaphore()
-            self.use_queue = True
+        self.use_queue = True
         self._queue = Queue()
         if args.no_queue:
             self.use_queue = False
@@ -232,7 +236,7 @@ class Posthaste(object):
                     print "Queueing %s" % file
                 self._queue.put_nowait(file)
         else:
-        self.files = files
+            self.files = files
 
     def get_objects(self, container, verbose):
         if verbose:
@@ -323,21 +327,21 @@ class Posthaste(object):
             for i in xrange(threads):
                 pool.spawn(_delete, i, self._queue, errors)
         else:
-        files = collections.defaultdict(list)
-        thread_mark = threads
-        files_per_thread = len(self.objects) / threads / 3
-        i = 0
-        for o in self.objects:
-            files[i].append(o['name'])
-            i += 1
-            if len(files[thread_mark - 1]) == files_per_thread:
-                thread_mark += threads
-                files_per_thread /= 2
-                i = 0
-            if i == thread_mark:
-                i = 0
-        for i, file_chunk in files.iteritems():
-            pool.spawn(_delete, i, file_chunk, errors)
+            files = collections.defaultdict(list)
+            thread_mark = threads
+            files_per_thread = len(self.objects) / threads / 3
+            i = 0
+            for o in self.objects:
+                files[i].append(o['name'])
+                i += 1
+                if len(files[thread_mark - 1]) == files_per_thread:
+                    thread_mark += threads
+                    files_per_thread /= 2
+                    i = 0
+                if i == thread_mark:
+                    i = 0
+            for i, file_chunk in files.iteritems():
+                pool.spawn(_delete, i, file_chunk, errors)
         pool.join()
         return errors
 
@@ -398,22 +402,22 @@ class Posthaste(object):
             for i in xrange(threads):
                 pool.spawn(_upload, i, self._queue, errors)
         else:
-        file_chunks = collections.defaultdict(list)
-        thread_mark = threads
-        files_per_thread = len(self.files) / threads / 3
-        i = 0
-        for f in self.files:
-            file_chunks[i].append(f)
-            i += 1
-            if len(file_chunks[thread_mark - 1]) == files_per_thread:
-                thread_mark += threads
-                files_per_thread /= 2
-                i = 0
-            if i == thread_mark:
-                i = 0
-        for i, file_chunk in file_chunks.iteritems():
-            pool.spawn(_upload, i, file_chunk, errors)
-        pool.join()
+            file_chunks = collections.defaultdict(list)
+            thread_mark = threads
+            files_per_thread = len(self.files) / threads / 3
+            i = 0
+            for f in self.files:
+                file_chunks[i].append(f)
+                i += 1
+                if len(file_chunks[thread_mark - 1]) == files_per_thread:
+                    thread_mark += threads
+                    files_per_thread /= 2
+                    i = 0
+                if i == thread_mark:
+                    i = 0
+            for i, file_chunk in file_chunks.iteritems():
+                pool.spawn(_upload, i, file_chunk, errors)
+            pool.join()
         return errors
 
     def handle_download(self, directory, container, threads, verbose):
