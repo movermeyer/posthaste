@@ -350,22 +350,32 @@ class Posthaste(object):
 
     def handle_upload(self, directory, container, threads, verbose):
         @self.requires_auth
-        def _upload(i, files, errors):
-            def _put(fobj):
-                with open(fobj['path'], 'rb') as f:
+        def _upload(thread, s, queue, errors):
+            if verbose:
+                print 'Thread %s: start' % thread
+            while True:
+                try:
+                    file = queue.get_nowait()
+                except gevent.queue.Empty:
+                    if verbose > 1:
+                        print "Thread %3s: queue empty" % thread
+                        print "Thread %3s: exiting" %thread
+                    raise gevent.GreenletExit()
+                else:
+                    with open(file['path'], 'rb') as f:
                     body = f.read()
                 if verbose > 1:
-                    print 'Uploading %s' % fobj['name']
+                        print 'Thread %3s: uploading %s' % (thread, file['name'])
                 try:
                     r = s.put('%s/%s/%s' %
-                              (self.endpoint,  container,  fobj['name']),
+                                  (self.endpoint,  container,  file['name']),
                               data=body, headers={
                                   'X-Auth-Token': self.token
                               })
                 except:
                     e = sys.exc_info()[1]
                     errors.append({
-                        'name': fobj['name'],
+                            'name': file['name'],
                         'container': container,
                         'exception': str(e)
                     })
@@ -374,52 +384,23 @@ class Posthaste(object):
                         raise AuthenticationError
                     if r.status_code != 201:
                         errors.append({
-                            'name': fobj['name'],
+                                'name': file['name'],
                             'container': container,
                             'status_code': r.status_code,
                             'headers': r.headers,
                             'response': json.loads(r.text)
                         })
-            if verbose:
-                print 'Starting thread %s' % i
-            s = requests.Session()
-            if self.use_queue:
-                assert isinstance(files, Queue)
-                while True:
-                    try:
-                        file = files.get(timeout=2)
-                    except gevent.queue.Empty:
-                        break
-                    else:
-                        _put(file)
-            else:
-                for file in self.files:
-                    _put(file)
+                    finally:
+                        if verbose > 1:
+                            print ("Thread %3s: upload complete for %s"
+                                   % (thread, file['name']))
 
-            if verbose:
-                print 'Completed thread %s' % i
+        s = requests.Session()
 
         pool = Pool(size=threads)
         errors = []
-        if self.use_queue:
             for i in xrange(threads):
-                pool.spawn(_upload, i, self._queue, errors)
-        else:
-            file_chunks = collections.defaultdict(list)
-            thread_mark = threads
-            files_per_thread = len(self.files) / threads / 3
-            i = 0
-            for f in self.files:
-                file_chunks[i].append(f)
-                i += 1
-                if len(file_chunks[thread_mark - 1]) == files_per_thread:
-                    thread_mark += threads
-                    files_per_thread /= 2
-                    i = 0
-                if i == thread_mark:
-                    i = 0
-            for i, file_chunk in file_chunks.iteritems():
-                pool.spawn(_upload, i, file_chunk, errors)
+            pool.spawn(_upload, i, s, self._queue, errors)
         pool.join()
         return errors
 
