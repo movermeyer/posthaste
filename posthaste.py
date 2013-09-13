@@ -231,10 +231,13 @@ class Posthaste(object):
             files.sort(key=lambda d: d['size'], reverse=True)
 
         if self.use_queue:
+            if verbose:
+                    sys.stdout.write("Queueing files...")
+                    sys.stdout.flush()
             for file in files:
-                if self._args.verbose > 1:
-                    print "Queueing %s" % file
                 self._queue.put_nowait(file)
+            if verbose:
+                print "Done!"
         else:
             self.files = files
 
@@ -417,7 +420,7 @@ class Posthaste(object):
                     i = 0
             for i, file_chunk in file_chunks.iteritems():
                 pool.spawn(_upload, i, file_chunk, errors)
-            pool.join()
+        pool.join()
         return errors
 
     def handle_download(self, directory, container, threads, verbose):
