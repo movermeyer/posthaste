@@ -326,7 +326,7 @@ class Posthaste(object):
 
     def handle_upload(self, directory, container, threads, verbose):
         @self.requires_auth
-        def _upload(thread, s, queue, errors):
+        def _upload(thread, queue, errors):
             if verbose:
                 print 'Thread %s: start' % thread
             while True:
@@ -376,7 +376,7 @@ class Posthaste(object):
         pool = Pool(size=threads)
         errors = []
             for i in xrange(threads):
-            pool.spawn(_upload, i, s, self._queue, errors)
+            pool.spawn(_upload, i, self._queue, errors)
         pool.join()
         return errors
 
