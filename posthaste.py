@@ -74,11 +74,6 @@ def handle_args():
                         help='Auth URL to use. Defaults to OS_AUTH_URL '
                              'environment variable with a fallback to '
                              '%s' % rs_auth_url)
-    parser.add_argument('-N', '--no-queue', required=False,
-                        action='store_true', default=False,
-                        help='Use a sorting algorithm rather than a shared '
-                             'work queue; disabled by default due to '
-                             'inefficiency.')
     parser.add_argument('-v', '--verbose', required=False, action='count',
                         help='Enable verbosity. Supply multiple times for '
                              'additional verbosity. 1) Show Thread '
@@ -120,8 +115,6 @@ class Posthaste(object):
         self.semaphore = threading.Semaphore()
         self.use_queue = True
         self._queue = Queue()
-        if args.no_queue:
-            self.use_queue = False
 
     def requires_auth(self, f):
         @functools.wraps(f)
