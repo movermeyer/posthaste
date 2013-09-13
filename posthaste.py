@@ -33,7 +33,7 @@ import threading
 
 
 def handle_args():
-    prog = "Posthaste"
+    prog = "python posthaste.py"
     desc = ("Gevent-based, multithreaded tool for interacting with OpenStack "
             "Swift and Rackspace Cloud Files")
     parser = argparse.ArgumentParser(prog=prog,

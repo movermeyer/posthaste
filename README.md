@@ -10,10 +10,10 @@ The "new" Gevent (as of this writing, 1.0 RC 2) alleviates the libevent dependen
 
 ## Usage
 
-	usage: Posthaste [-h] -c CONTAINER [-r REGION] [--internal] [-t THREADS]
-	                 [-u USERNAME] [-p PASSWORD] [-i {rackspace,keystone}]
-	                 [-a AUTH_URL] [-v]
-	                 {delete,upload,download} ...
+	usage: python posthaste.py [-h] -c CONTAINER [-r REGION] [--internal]
+	                           [-t THREADS] [-u USERNAME] [-p PASSWORD]
+	                           [-i {rackspace,keystone}] [-a AUTH_URL] [-v]
+	                           {delete,upload,download} ...
 	
 	Gevent-based, multithreaded tool for interacting with OpenStack Swift and
 	Rackspace Cloud Files
