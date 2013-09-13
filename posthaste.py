@@ -282,45 +282,45 @@ class Posthaste(object):
                     f = files.get_nowait()
                 except gevent.queue.Empty:
                     if verbose:
-                if verbose > 1:
+                        if verbose > 1:
                             print "Thread %3s: queue empty" % i
                         print "Thread %3s: exiting" % i
                     raise gevent.GreenletExit
                 else:
                     if verbose > 1:
                         print 'Thread %3s: deleting %s' % (i, f)
-                try:
-                    r = s.delete('%s/%s/%s' % (self.endpoint, container, f),
-                                 headers={'X-Auth-Token': self.token})
-                except:
-                    e = sys.exc_info()[1]
-                    errors.append({
-                        'name': f,
-                        'container': container,
-                        'exception': str(e)
-                    })
-                else:
-                    if r.status_code == 401:
-                        raise AuthenticationError
-                    if r.status_code != 204:
+                    try:
+                        r = s.delete('%s/%s/%s' % (self.endpoint, container, f),
+                                     headers={'X-Auth-Token': self.token})
+                    except:
+                        e = sys.exc_info()[1]
                         errors.append({
                             'name': f,
                             'container': container,
-                            'status_code': r.status_code,
-                            'headers': r.headers,
-                            'response': json.loads(r.text)
+                            'exception': str(e)
                         })
+                    else:
+                        if r.status_code == 401:
+                            raise AuthenticationError
+                        if r.status_code != 204:
+                            errors.append({
+                                'name': f,
+                                'container': container,
+                                'status_code': r.status_code,
+                                'headers': r.headers,
+                                'response': json.loads(r.text)
+                            })
                     finally:
                         if verbose > 1:
                             print ("Thread %3s: delete complete for %s"
                                    % (i, f))
 
-            s = requests.Session()
+        s = requests.Session()
 
         pool = Pool(size=threads)
         errors = []
-            for i in xrange(threads):
-                pool.spawn(_delete, i, self._queue, errors)
+        for i in xrange(threads):
+            pool.spawn(_delete, i, self._queue, errors)
         pool.join()
         return errors
 
@@ -339,43 +339,43 @@ class Posthaste(object):
                     raise gevent.GreenletExit()
                 else:
                     with open(file['path'], 'rb') as f:
-                    body = f.read()
-                if verbose > 1:
+                        body = f.read()
+                    if verbose > 1:
                         print 'Thread %3s: uploading %s' % (thread, file['name'])
-                try:
-                    r = s.put('%s/%s/%s' %
+                    try:
+                        r = s.put('%s/%s/%s' %
                                   (self.endpoint,  container,  file['name']),
-                              data=body, headers={
-                                  'X-Auth-Token': self.token
-                              })
-                except:
-                    e = sys.exc_info()[1]
-                    errors.append({
-                            'name': file['name'],
-                        'container': container,
-                        'exception': str(e)
-                    })
-                else:
-                    if r.status_code == 401:
-                        raise AuthenticationError
-                    if r.status_code != 201:
+                                  data=body, headers={
+                                      'X-Auth-Token': self.token
+                                  })
+                    except:
+                        e = sys.exc_info()[1]
                         errors.append({
-                                'name': file['name'],
+                            'name': file['name'],
                             'container': container,
-                            'status_code': r.status_code,
-                            'headers': r.headers,
-                            'response': json.loads(r.text)
+                            'exception': str(e)
                         })
+                    else:
+                        if r.status_code == 401:
+                            raise AuthenticationError
+                        if r.status_code != 201:
+                            errors.append({
+                                'name': file['name'],
+                                'container': container,
+                                'status_code': r.status_code,
+                                'headers': r.headers,
+                                'response': json.loads(r.text)
+                            })
                     finally:
                         if verbose > 1:
                             print ("Thread %3s: upload complete for %s"
                                    % (thread, file['name']))
-
+            
         s = requests.Session()
 
         pool = Pool(size=threads)
         errors = []
-            for i in xrange(threads):
+        for i in xrange(threads):
             pool.spawn(_upload, i, self._queue, errors)
         pool.join()
         return errors
@@ -395,56 +395,56 @@ class Posthaste(object):
                         print "Thread %3s: exiting" % i
                     raise gevent.GreenletExit
                 else:
-                directory = os.path.abspath(directory)
-                if verbose > 1:
+                    directory = os.path.abspath(directory)
+                    if verbose > 1:
                         print 'Thread %3s: downloadng %s' % (i, filename)
-                try:
-                    path = os.path.join(directory, filename)
                     try:
-                        os.makedirs(os.path.dirname(path), 0755)
-                    except OSError as e:
-                        if e.errno != 17:
-                            raise
-                    with open(path, 'wb+') as f:
-                        r = s.get('%s/%s/%s' % (self.endpoint,
-                                                container,
-                                                filename),
-                                  headers={
-                                      'X-Auth-Token': self.token
-                                  }, stream=True)
-                        if r.status_code == 401:
-                            raise AuthenticationError
-                        for block in r.iter_content(4096):
-                            if not block:
-                                break
-                            f.write(block)
-                except:
-                    e = sys.exc_info()[1]
-                    errors.append({
-                        'name': filename,
-                        'container': container,
-                        'exception': str(e)
-                    })
-                else:
-                    if r.status_code != 200:
+                        path = os.path.join(directory, filename)
+                        try:
+                            os.makedirs(os.path.dirname(path), 0755)
+                        except OSError as e:
+                            if e.errno != 17:
+                                raise
+                        with open(path, 'wb+') as f:
+                            r = s.get('%s/%s/%s' % (self.endpoint,
+                                                    container,
+                                                    filename),
+                                      headers={
+                                          'X-Auth-Token': self.token
+                                      }, stream=True)
+                            if r.status_code == 401:
+                                raise AuthenticationError
+                            for block in r.iter_content(4096):
+                                if not block:
+                                    break
+                                f.write(block)
+                    except:
+                        e = sys.exc_info()[1]
                         errors.append({
                             'name': filename,
                             'container': container,
-                            'status_code': r.status_code,
-                            'headers': r.headers,
-                            'response': json.loads(r.text)
+                            'exception': str(e)
                         })
+                    else:
+                        if r.status_code != 200:
+                            errors.append({
+                                'name': filename,
+                                'container': container,
+                                'status_code': r.status_code,
+                                'headers': r.headers,
+                                'response': json.loads(r.text)
+                            })
                 finally:
                     if verbose > 1:
                         print ("Thread %3s: download complete for %s"
                                % (i, filename))
 
-            s = requests.Session()
+        s = requests.Session()
 
         pool = Pool(size=threads)
         errors = []
-            for i in xrange(threads):
-                pool.spawn(_download, i, self._queue, directory, errors)
+        for i in xrange(threads):
+            pool.spawn(_download, i, self._queue, directory, errors)
         pool.join()
         return errors
 
@@ -476,7 +476,6 @@ if __name__ == '__main__':
     try:
         shell()
     except:
-        raise
         e = sys.exc_info()[1]
         raise SystemExit(e)
 
