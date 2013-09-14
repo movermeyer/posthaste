@@ -33,9 +33,9 @@ import threading
 
 
 def handle_args():
-    prog = "python posthaste.py"
-    desc = ("Gevent-based, multithreaded tool for interacting with OpenStack "
-            "Swift and Rackspace Cloud Files")
+    prog = 'python posthaste.py'
+    desc = ('Gevent-based, multithreaded tool for interacting with OpenStack '
+            'Swift and Rackspace Cloud Files')
     parser = argparse.ArgumentParser(prog=prog,
                                      description=desc)
     parser.add_argument('-c', '--container', required=True,
@@ -213,26 +213,26 @@ class Posthaste(object):
                     'size': obj_size
                 })
         if verbose:
-            sys.stdout.write("Scanning the filesystem for files...")
+            sys.stdout.write('Scanning the filesystem for files...')
             sys.stdout.flush()
         files = []
         os.path.walk(directory, _walker, None)
         if verbose:
-            print "Done!"
+            print 'Done!'
         if sized_sort:
             files.sort(key=lambda d: d['size'], reverse=True)
 
         if verbose:
-            sys.stdout.write("Queueing files...")
+            sys.stdout.write('Queueing files...')
             sys.stdout.flush()
         for file in files:
             self._queue.put_nowait(file)
         if verbose:
-            print "Done!"
+            print 'Done!'
 
     def get_objects(self, container, verbose):
         if verbose:
-            sys.stdout.write("Querying API for objects...")
+            sys.stdout.write('Querying API for objects...')
             sys.stdout.flush()
         headers = {
             'Accept': 'application/json',
@@ -263,7 +263,7 @@ class Posthaste(object):
             self._queue.put_nowait(obj['name'])
 
         if verbose:
-            print "Done!"
+            print 'Done!'
 
     def handle_delete(self, container, threads, verbose):
         @self.requires_auth
@@ -276,14 +276,15 @@ class Posthaste(object):
                 except gevent.queue.Empty:
                     if verbose:
                         if verbose > 1:
-                            print "Thread %3s: queue empty" % i
-                        print "Thread %3s: exiting" % i
+                            print 'Thread %3s: queue empty' % i
+                        print 'Thread %3s: exiting' % i
                     raise gevent.GreenletExit
                 else:
                     if verbose > 1:
                         print 'Thread %3s: deleting %s' % (i, f)
                     try:
-                        r = s.delete('%s/%s/%s' % (self.endpoint, container, f),
+                        r = s.delete('%s/%s/%s' %
+                                     (self.endpoint, container, f),
                                      headers={'X-Auth-Token': self.token})
                     except:
                         e = sys.exc_info()[1]
@@ -305,7 +306,7 @@ class Posthaste(object):
                             })
                     finally:
                         if verbose > 1:
-                            print ("Thread %3s: delete complete for %s"
+                            print ('Thread %3s: delete complete for %s'
                                    % (i, f))
 
         s = requests.Session()
@@ -335,7 +336,8 @@ class Posthaste(object):
                     with open(file['path'], 'rb') as f:
                         body = f.read()
                     if verbose > 1:
-                        print 'Thread %3s: uploading %s' % (thread, file['name'])
+                        print 'Thread %3s: uploading %s' % (thread,
+                                                            file['name'])
                     try:
                         r = s.put('%s/%s/%s' %
                                   (self.endpoint,  container,  file['name']),
@@ -362,9 +364,9 @@ class Posthaste(object):
                             })
                     finally:
                         if verbose > 1:
-                            print ("Thread %3s: upload complete for %s"
+                            print ('Thread %3s: upload complete for %s'
                                    % (thread, file['name']))
-            
+
         s = requests.Session()
 
         pool = Pool(size=threads)
@@ -385,8 +387,8 @@ class Posthaste(object):
                 except gevent.queue.Empty:
                     if verbose:
                         if verbose > 1:
-                            print "Thread %3s: queue empty" % i
-                        print "Thread %3s: exiting" % i
+                            print 'Thread %3s: queue empty' % i
+                        print 'Thread %3s: exiting' % i
                     raise gevent.GreenletExit
                 else:
                     directory = os.path.abspath(directory)
@@ -430,7 +432,7 @@ class Posthaste(object):
                             })
                 finally:
                     if verbose > 1:
-                        print ("Thread %3s: download complete for %s"
+                        print ('Thread %3s: download complete for %s'
                                % (i, filename))
 
         s = requests.Session()
