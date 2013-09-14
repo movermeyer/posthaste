@@ -326,9 +326,10 @@ class Posthaste(object):
                 try:
                     file = queue.get_nowait()
                 except gevent.queue.Empty:
-                    if verbose > 1:
-                        print "Thread %3s: queue empty" % thread
-                        print "Thread %3s: exiting" %thread
+                    if verbose:
+                        if verbose > 1:
+                            print 'Thread %3s: queue empty' % thread
+                        print 'Thread %3s: exiting' % thread
                     raise gevent.GreenletExit()
                 else:
                     with open(file['path'], 'rb') as f:
