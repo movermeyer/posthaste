@@ -30,13 +30,15 @@ import functools
 import time
 import threading
 
+__version__ = '0.2.0'
+
 
 def handle_args():
-    prog = 'python posthaste.py'
     desc = ('Gevent-based, multithreaded tool for interacting with OpenStack '
             'Swift and Rackspace Cloud Files')
-    parser = argparse.ArgumentParser(prog=prog,
-                                     description=desc)
+    parser = argparse.ArgumentParser(description=desc)
+    parser.add_argument('--version', action='version',
+                        version=__version__)
     parser.add_argument('-c', '--container', required=True,
                         help='The name container to operate on')
     parser.add_argument('-r', '--region', required=False,
