@@ -474,7 +474,7 @@ if __name__ == '__main__':
         shell()
     except:
         e = sys.exc_info()[1]
-        if not str(e).isdigit():
+        if not isinstance(e, SystemExit):
             raise SystemExit(e)
 
 # vim:set ts=4 sw=4 expandtab:
