@@ -113,7 +113,6 @@ class Posthaste(object):
         self._authenticate(args)
         self._num_auths = 0
         self.semaphore = threading.Semaphore()
-        self.use_queue = True
         self._queue = Queue()
 
     def requires_auth(self, f):
@@ -223,16 +222,13 @@ class Posthaste(object):
         if sized_sort:
             files.sort(key=lambda d: d['size'], reverse=True)
 
-        if self.use_queue:
-            if verbose:
-                    sys.stdout.write("Queueing files...")
-                    sys.stdout.flush()
-            for file in files:
-                self._queue.put_nowait(file)
-            if verbose:
-                print "Done!"
-        else:
-            self.files = files
+        if verbose:
+            sys.stdout.write("Queueing files...")
+            sys.stdout.flush()
+        for file in files:
+            self._queue.put_nowait(file)
+        if verbose:
+            print "Done!"
 
     def get_objects(self, container, verbose):
         if verbose:
@@ -263,11 +259,8 @@ class Posthaste(object):
             objects = r.json()
             all_objects.extend(objects)
 
-        if self.use_queue:
-            for obj in all_objects:
-                self._queue.put_nowait(obj['name'])
-        else:
-            self.objects = all_objects
+        for obj in all_objects:
+            self._queue.put_nowait(obj['name'])
 
         if verbose:
             print "Done!"
