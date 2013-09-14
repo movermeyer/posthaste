@@ -24,7 +24,6 @@ from gevent.queue import Queue
 import sys
 import json
 import os
-import collections
 import argparse
 import requests
 import functools
