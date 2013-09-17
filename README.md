@@ -1,12 +1,12 @@
 # posthaste
 
-OpenStack Swift threaded operation utility for Uploading, Downloading and Deleting
+OpenStack Swift and Rackspace Cloud Files threaded-operation utility for uploading, downloading, and deleting objects.
 
 ## Requirements
 
 posthaste currently requires [gevent](http://www.gevent.org/), which in turn requires [greenlet](https://pypi.python.org/pypi/greenlet) and [libevent](http://libevent.org/). 
 
-The "new" Gevent (as of this writing, 1.0 RC 2) alleviates the libevent dependency and thus simplifies the process of using tool.  More information can be found on [Github](https://github.com/surfly/gevent#installing-from-github).
+The "new" Gevent (as of this writing, 1.0 RC 2) alleviates the libevent dependency and thus simplifies the process of using this tool.  More information can be found on [Github](https://github.com/surfly/gevent#installing-from-github).
 
 ## Usage
 
