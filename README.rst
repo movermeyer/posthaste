@@ -4,6 +4,11 @@ posthaste
 OpenStack Swift threaded operation utility for Uploading, Downloading
 and Deleting
 
+.. image:: https://pypip.in/v/posthaste/badge.png
+        :target: https://crate.io/packages/posthaste
+.. image:: https://pypip.in/d/posthaste/badge.png
+        :target: https://crate.io/packages/posthaste
+
 Requirements
 ------------
 
@@ -72,13 +77,13 @@ Examples
 
 ::
 
-    python posthaste.py -c example -r DFW -u $OS_USERNAME -p $OS_PASSWORD -t 100 upload /path/to/some/dir/
+    posthaste -c example -r DFW -u $OS_USERNAME -p $OS_PASSWORD -t 100 upload /path/to/some/dir/
 
 ::
 
-    python posthaste.py -c example -r DFW -u $OS_USERNAME -p $OS_PASSWORD -t 100 download /path/to/some/dir/
+    posthaste -c example -r DFW -u $OS_USERNAME -p $OS_PASSWORD -t 100 download /path/to/some/dir/
 
 ::
 
-    python posthaste.py -c example -r DFW -u $OS_USERNAME -p $OS_PASSWORD -t 100 delete
+    posthaste -c example -r DFW -u $OS_USERNAME -p $OS_PASSWORD -t 100 delete
 
