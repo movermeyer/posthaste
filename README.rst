@@ -26,23 +26,24 @@ Usage
 
 ::
 
-    usage: python posthaste.py [-h] -c CONTAINER [-r REGION] [--internal]
-                               [-t THREADS] [-u USERNAME] [-p PASSWORD]
-                               [-i {rackspace,keystone}] [-a AUTH_URL] [-v]
-                               {delete,upload,download} ...
-
+    usage: posthaste [-h] [--version] -c CONTAINER [-r REGION] [--internal]
+                     [-t THREADS] [-u USERNAME] [-p PASSWORD]
+                     [-i {rackspace,keystone}] [-a AUTH_URL] [-v]
+                     {delete,upload,download} ...
+    
     Gevent-based, multithreaded tool for interacting with OpenStack Swift and
     Rackspace Cloud Files
-
+    
     positional arguments:
       {delete,upload,download}
         delete              Delete files from specified container
         upload              Upload files to specified container
         download            Download files to specified directory from the
                             specified container
-
+    
     optional arguments:
       -h, --help            show this help message and exit
+      --version             show program's version number and exit
       -c CONTAINER, --container CONTAINER
                             The name container to operate on
       -r REGION, --region REGION
