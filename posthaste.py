@@ -30,7 +30,7 @@ import functools
 import time
 import threading
 
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 
 
 def handle_args():

@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='posthaste',
-    version='0.2.1',
+    version='0.2.2',
     description=('Gevent-based, multithreaded tool for interacting with '
                  'OpenStack Swift and Rackspace Cloud Files'),
     long_description=open('README.rst').read(),
