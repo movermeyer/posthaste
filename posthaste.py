@@ -255,6 +255,8 @@ class Posthaste(object):
         for obj in objects:
             self._queue.put_nowait(obj['name'])
 
+        del objects
+
         if verbose:
             print 'Done retrieving initial objects!'
 
@@ -283,6 +285,7 @@ class Posthaste(object):
 
         objects = r.json()
         while len(objects):
+            del objects
             r = requests.get('%s/%s?format=json&marker=%s' %
                              (self.endpoint, container, marker),
                              headers=headers)
@@ -300,6 +303,8 @@ class Posthaste(object):
 
             for obj in objects:
                 self._queue.put_nowait(obj['name'])
+
+        del objects
 
         if verbose:
             print 'Done retrieving remaining objects!'
