@@ -362,7 +362,6 @@ class Posthaste(object):
                         if verbose > 1:
                             print ('Thread %3s: delete complete for %s'
                                    % (i, f))
-                finally:
                     del f
 
         s = requests.Session()
@@ -430,7 +429,6 @@ class Posthaste(object):
                                    % (thread, file['name']))
                         del f
                         del body
-                finally:
                     del file
 
         s = requests.Session()
@@ -507,7 +505,6 @@ class Posthaste(object):
                             print ('Thread %3s: download complete for %s'
                                    % (i, filename))
                         del f
-                finally:
                     del filename
 
         s = requests.Session()
