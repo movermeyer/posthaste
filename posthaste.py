@@ -120,7 +120,7 @@ class Posthaste(object):
     def requires_auth(self, f):
         @functools.wraps(f)
         def wrapped(*args, **kwargs):
-            while True:
+            while 1:
                 try:
                     f(*args, **kwargs)
                 except AuthenticationError:
@@ -214,6 +214,7 @@ class Posthaste(object):
                     'name': obj_name,
                     'size': obj_size
                 })
+            del fnames
         if verbose:
             sys.stdout.write('Scanning the filesystem for files...')
             sys.stdout.flush()
@@ -255,6 +256,7 @@ class Posthaste(object):
         for obj in objects:
             self._queue.put_nowait(obj['name'])
 
+        del r
         del objects
 
         if verbose:
@@ -285,6 +287,7 @@ class Posthaste(object):
 
         objects = r.json()
         while len(objects):
+            del r
             del objects
             r = requests.get('%s/%s?format=json&marker=%s' %
                              (self.endpoint, container, marker),
@@ -304,6 +307,7 @@ class Posthaste(object):
             for obj in objects:
                 self._queue.put_nowait(obj['name'])
 
+        del r
         del objects
 
         if verbose:
@@ -314,7 +318,7 @@ class Posthaste(object):
         def _delete(i, files, errors):
             if verbose:
                 print 'Thread %3s: starting' % i
-            while True:
+            while 1:
                 try:
                     f = files.get_nowait()
                 except gevent.queue.Empty:
@@ -353,11 +357,11 @@ class Posthaste(object):
                                 result['response'] = None
                             errors.append(result)
                             del result
+                        del r
                     finally:
                         if verbose > 1:
                             print ('Thread %3s: delete complete for %s'
                                    % (i, f))
-                        del r
                 finally:
                     del f
 
@@ -375,7 +379,7 @@ class Posthaste(object):
         def _upload(thread, queue, errors):
             if verbose:
                 print 'Thread %s: start' % thread
-            while True:
+            while 1:
                 try:
                     file = queue.get_nowait()
                 except gevent.queue.Empty:
@@ -418,10 +422,16 @@ class Posthaste(object):
                             except ValueError:
                                 result['response'] = None
                             errors.append(result)
+                            del result
+                        del r
                     finally:
                         if verbose > 1:
                             print ('Thread %3s: upload complete for %s'
                                    % (thread, file['name']))
+                        del f
+                        del body
+                finally:
+                    del file
 
         s = requests.Session()
 
@@ -437,7 +447,7 @@ class Posthaste(object):
         def _download(i, files, directory, errors):
             if verbose:
                 print 'Starting thread %s' % i
-            while True:
+            while 1:
                 try:
                     filename = files.get_nowait()
                 except gevent.queue.Empty:
@@ -490,10 +500,15 @@ class Posthaste(object):
                             except ValueError:
                                 result['response'] = None
                             errors.append(result)
+                            del result
+                        del r
                     finally:
                         if verbose > 1:
                             print ('Thread %3s: download complete for %s'
                                    % (i, filename))
+                        del f
+                finally:
+                    del filename
 
         s = requests.Session()
 
