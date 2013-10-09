@@ -352,10 +352,14 @@ class Posthaste(object):
                             except ValueError:
                                 result['response'] = None
                             errors.append(result)
+                            del result
                     finally:
                         if verbose > 1:
                             print ('Thread %3s: delete complete for %s'
                                    % (i, f))
+                        del r
+                finally:
+                    del f
 
         s = requests.Session()
 
