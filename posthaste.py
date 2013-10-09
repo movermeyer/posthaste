@@ -274,7 +274,6 @@ class Posthaste(object):
 
         marker = self._initial_marker
 
-        all_objects = []
         r = requests.get('%s/%s?format=json&marker=%s' %
                          (self.endpoint, container, marker),
                          headers=headers)
@@ -283,7 +282,6 @@ class Posthaste(object):
             raise gevent.GreenletExit(json.dumps(json.loads(r.text), indent=4))
 
         objects = r.json()
-        all_objects.extend(objects)
         while len(objects):
             r = requests.get('%s/%s?format=json&marker=%s' %
                              (self.endpoint, container, marker),
