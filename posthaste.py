@@ -115,6 +115,7 @@ class Posthaste(object):
         self._num_auths = 0
         self.semaphore = threading.Semaphore()
         self._queue = Queue()
+        self._initial_marker = None
 
     def requires_auth(self, f):
         @functools.wraps(f)
@@ -231,16 +232,16 @@ class Posthaste(object):
         if verbose:
             print 'Done!'
 
-    def get_objects(self, container, verbose):
+    def get_initial_objects(self, container, verbose):
         if verbose:
-            sys.stdout.write('Querying API for objects...')
+            sys.stdout.write('Querying API for initial objects '
+                             '(limit 10,000)...\n')
             sys.stdout.flush()
         headers = {
             'Accept': 'application/json',
             'X-Auth-Token': self.token
         }
 
-        all_objects = []
         r = requests.get('%s/%s?format=json' % (self.endpoint, container),
                          headers=headers)
 
@@ -248,23 +249,62 @@ class Posthaste(object):
             raise SystemExit(json.dumps(json.loads(r.text), indent=4))
 
         objects = r.json()
-        all_objects.extend(objects)
-        while len(objects):
-            r = requests.get('%s/%s?format=json&marker=%s' %
-                             (self.endpoint, container, objects[-1]['name']),
-                             headers=headers)
+        if len(objects) == 10000:
+            self._initial_marker = objects[-1]['name']
 
-            if r.status_code != 200:
-                raise SystemExit(json.dumps(json.loads(r.text), indent=4))
-
-            objects = r.json()
-            all_objects.extend(objects)
-
-        for obj in all_objects:
+        for obj in objects:
             self._queue.put_nowait(obj['name'])
 
         if verbose:
-            print 'Done!'
+            print 'Done retrieving initial objects!'
+
+    def get_remaining_objects(self, container, verbose):
+        if verbose:
+            sys.stdout.write('Querying API for remaining objects...\n')
+            sys.stdout.flush()
+
+        if not self._initial_marker:
+            print 'No remaining objects to retreive!'
+            return
+
+        headers = {
+            'Accept': 'application/json',
+            'X-Auth-Token': self.token
+        }
+
+        marker = self._initial_marker
+
+        all_objects = []
+        r = requests.get('%s/%s?format=json&marker=%s' %
+                         (self.endpoint, container, marker),
+                         headers=headers)
+
+        if r.status_code != 200:
+            raise gevent.GreenletExit(json.dumps(json.loads(r.text), indent=4))
+
+        objects = r.json()
+        all_objects.extend(objects)
+        while len(objects):
+            r = requests.get('%s/%s?format=json&marker=%s' %
+                             (self.endpoint, container, marker),
+                             headers=headers)
+
+            try:
+                objects = r.json()
+            except ValueError:
+                break
+            all_objects.extend(objects)
+
+            try:
+                marker = objects[-1]['name']
+            except IndexError:
+                break
+
+            for obj in objects:
+                self._queue.put_nowait(obj['name'])
+
+        if verbose:
+            print 'Done retrieving remaining objects!'
 
     def handle_delete(self, container, threads, verbose):
         @self.requires_auth
@@ -298,13 +338,17 @@ class Posthaste(object):
                         if r.status_code == 401:
                             raise AuthenticationError
                         if r.status_code != 204:
-                            errors.append({
+                            result = {
                                 'name': f,
                                 'container': container,
                                 'status_code': r.status_code,
-                                'headers': r.headers,
-                                'response': json.loads(r.text)
-                            })
+                                'headers': dict(**r.headers)
+                            }
+                            try:
+                                result['response'] = json.loads(r.text)
+                            except ValueError:
+                                result['response'] = None
+                            errors.append(result)
                     finally:
                         if verbose > 1:
                             print ('Thread %3s: delete complete for %s'
@@ -356,13 +400,17 @@ class Posthaste(object):
                         if r.status_code == 401:
                             raise AuthenticationError
                         if r.status_code != 201:
-                            errors.append({
+                            result = {
                                 'name': file['name'],
                                 'container': container,
                                 'status_code': r.status_code,
-                                'headers': r.headers,
-                                'response': json.loads(r.text)
-                            })
+                                'headers': dict(**r.headers)
+                            }
+                            try:
+                                result['response'] = json.loads(r.text)
+                            except ValueError:
+                                result['response'] = None
+                            errors.append(result)
                     finally:
                         if verbose > 1:
                             print ('Thread %3s: upload complete for %s'
@@ -424,17 +472,21 @@ class Posthaste(object):
                         })
                     else:
                         if r.status_code != 200:
-                            errors.append({
+                            result = {
                                 'name': filename,
                                 'container': container,
                                 'status_code': r.status_code,
-                                'headers': r.headers,
-                                'response': json.loads(r.text)
-                            })
-                finally:
-                    if verbose > 1:
-                        print ('Thread %3s: download complete for %s'
-                               % (i, filename))
+                                'headers': dict(**r.headers)
+                            }
+                            try:
+                                result['response'] = json.loads(r.text)
+                            except ValueError:
+                                result['response'] = None
+                            errors.append(result)
+                    finally:
+                        if verbose > 1:
+                            print ('Thread %3s: download complete for %s'
+                                   % (i, filename))
 
         s = requests.Session()
 
@@ -454,11 +506,15 @@ def shell():
         errors = posthaste.handle_upload(args.directory, args.container,
                                          args.threads, args.verbose)
     elif args.action == 'download':
-        posthaste.get_objects(args.container, args.verbose)
+        posthaste.get_initial_objects(args.container, args.verbose)
+        gevent.Greenlet.spawn(posthaste.get_remaining_objects, args.container,
+                              args.verbose)
         errors = posthaste.handle_download(args.directory, args.container,
                                            args.threads, args.verbose)
     elif args.action == 'delete':
-        posthaste.get_objects(args.container, args.verbose)
+        posthaste.get_initial_objects(args.container, args.verbose)
+        gevent.Greenlet.spawn(posthaste.get_remaining_objects, args.container,
+                              args.verbose)
         errors = posthaste.handle_delete(args.container, args.threads,
                                          args.verbose)
 
