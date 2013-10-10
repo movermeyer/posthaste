@@ -304,6 +304,9 @@ class Posthaste(object):
 
             try:
                 marker = objects[-1]['name']
+                if verbose:
+                    sys.stdout.write('Marker is: %s\n' % marker)
+                    sys.stdout.flush()
             except IndexError:
                 break
 
