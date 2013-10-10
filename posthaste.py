@@ -277,9 +277,6 @@ class Posthaste(object):
         }
 
         marker = self._initial_marker
-        if marker:
-            sys.stdout.write('Marker is: %s\n' % marker)
-            sys.stdout.flush()
 
         r = requests.get('%s/%s?format=json&marker=%s' %
                          (self.endpoint, container, marker),
