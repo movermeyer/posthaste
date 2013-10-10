@@ -317,7 +317,8 @@ class Posthaste(object):
         del objects
 
         if verbose:
-            print 'Done retrieving remaining objects!'
+            sys.stdout.write('Done retrieving remaining objects!')
+            sys.stdout.flush()
 
     def handle_delete(self, container, threads, verbose):
         @self.requires_auth
