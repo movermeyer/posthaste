@@ -297,7 +297,6 @@ class Posthaste(object):
                 objects = r.json()
             except ValueError:
                 break
-            # all_objects.extend(objects)
 
             try:
                 marker = objects[-1]['name']
