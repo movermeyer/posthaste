@@ -272,7 +272,8 @@ class Posthaste(object):
             sys.stdout.flush()
 
         if not self._initial_marker:
-            print 'No remaining objects to retreive!'
+            sys.stdout.write('No remaining objects to retreive!')
+            sys.stdout.flush()
             return
 
         headers = {
