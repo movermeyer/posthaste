@@ -292,54 +292,79 @@ class Posthaste(object):
 
         objects = r.json()
         queue_max_size = self._args.queue_limit
+
         while len(objects):
             del r
             del objects
+
             r = requests.get('%s/%s?format=json&marker=%s' %
                              (self.endpoint, container, marker),
                              headers=headers)
 
-            try:
-                objects = r.json()
-            except ValueError:
-                break
+            if r.status_code == 200:
+                try:
+                    objects = r.json()
+                except ValueError:
+                    break
 
-            try:
-                marker = objects[-1]['name']
+                try:
+                    marker = objects[-1]['name']
+                    if verbose:
+                        sys.stdout.write('Marker is: %s\n' % marker)
+                        sys.stdout.flush()
+                except IndexError:
+                    break
+
                 if verbose:
-                    sys.stdout.write('Marker is: %s\n' % marker)
+                    sys.stdout.write(
+                        'Current queue size: %d\n' % self._queue.qsize()
+                    )
                     sys.stdout.flush()
-            except IndexError:
-                break
+                
+                display_count = False
+                while self._queue.qsize() > queue_max_size:
+                    if verbose:
+                        if display_count:
+                            sys.stdout.write(
+                                'Current queue size: %d\n' % \
+                                self._queue.qsize()
+                            )
+                            sys.stdout.flush()
+                        else:
+                            sys.stdout.write(
+                                'Waiting to add new objects to queue\n'
+                            )
+                            sys.stdout.flush()
+                            display_count = True
+                    time.sleep(60)
+                else:
+                    for obj in objects:
+                        self._queue.put_nowait(obj['name'])
 
-            if verbose:
-                sys.stdout.write(
-                    'Current queue size: %d\n' % self._queue.qsize()
-                )
-                sys.stdout.flush()
-            
-            display_count = False
-            while self._queue.qsize() > queue_max_size:
+            elif r.status_code == 401:
                 if verbose:
-                    if display_count:
+                    sys.stdout.write(
+                        'Authentication failed when retrieving objects\n'
+                    )
+                    sys.stdout.flush()
+                time.sleep(30)
+                if headers.get('X-Auth-Token') != self.token:
+                    headers['X-Auth-Token'] = self.token
+                    objects = 'Script Continues'
+                else:
+                    if verbose:
                         sys.stdout.write(
-                            'Current queue size: %d\n' % self._queue.qsize()
+                            'Authentication wait failed, exiting queuing\n'
                         )
                         sys.stdout.flush()
-                    else:
-                        sys.stdout.write('Waiting to add new objects to queue\n')
-                        sys.stdout.flush()
-                        display_count = True
-                time.sleep(60)
-            else:
-                for obj in objects:
-                    self._queue.put_nowait(obj['name'])
+                    objects = 'Auth Failure - Exiting'
+                    break
 
         del r
         del objects
 
         if verbose:
-            sys.stdout.write('Done retrieving remaining objects!')
+            sys.stdout.write('Done retrieving remaining objects!\n')
             sys.stdout.flush()
 
     def handle_delete(self, container, threads, verbose):
