@@ -54,6 +54,10 @@ def handle_args():
                         default=10,
                         help='Number of concurrent threads used for '
                              'deletion. Default 10')
+    parser.add_argument('-q', '--queue-limit', required=False, type=int,
+                        default=30000,
+                        help='Max size of queue when queuing more than '
+                             '10,000 objects. Default is 30000')
     parser.add_argument('-u', '--username', required=False,
                         default=os.getenv('OS_USERNAME'),
                         help='Username to authenticate with. Defaults to '
@@ -286,7 +290,7 @@ class Posthaste(object):
             raise gevent.GreenletExit(json.dumps(json.loads(r.text), indent=4))
 
         objects = r.json()
-        queue_max_size = 50000
+        queue_max_size = self._args.queue_limit
         while len(objects):
             del r
             del objects
