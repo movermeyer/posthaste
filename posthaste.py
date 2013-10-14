@@ -286,6 +286,7 @@ class Posthaste(object):
             raise gevent.GreenletExit(json.dumps(json.loads(r.text), indent=4))
 
         objects = r.json()
+        queue_max_size = 50000
         while len(objects):
             del r
             del objects
@@ -306,8 +307,28 @@ class Posthaste(object):
             except IndexError:
                 break
 
-            for obj in objects:
-                self._queue.put_nowait(obj['name'])
+            if verbose:
+                sys.stdout.write(
+                    'Current queue size: %d\n' % self._queue.qsize()
+                )
+                sys.stdout.flush()
+            
+            display_count = False
+            while self._queue.qsize() > queue_max_size:
+                if verbose:
+                    if display_count:
+                        sys.stdout.write(
+                            'Current queue size: %d\n' % self._queue.qsize()
+                        )
+                        sys.stdout.flush()
+                    else:
+                        sys.stdout.write('Waiting to add new objects to queue\n')
+                        sys.stdout.flush()
+                        display_count = True
+                time.sleep(60)
+            else:
+                for obj in objects:
+                    self._queue.put_nowait(obj['name'])
 
         del r
         del objects
