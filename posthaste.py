@@ -292,7 +292,7 @@ class Posthaste(object):
 
         objects = r.json()
         queue_max_size = self._args.queue_limit
-
+        error_count = 0
         while len(objects):
             del r
             del objects
@@ -302,6 +302,7 @@ class Posthaste(object):
                              headers=headers)
 
             if r.status_code == 200:
+                error_count = 0
                 try:
                     objects = r.json()
                 except ValueError:
@@ -359,6 +360,21 @@ class Posthaste(object):
                         sys.stdout.flush()
                     objects = 'Auth Failure - Exiting'
                     break
+            else:
+                if verbose:
+                    sys.stdout.write(
+                        'Error recieved status code: %s' % str(r.status_code)
+                    )
+                    sys.stdout.flush()
+                error_count += 1
+                if error_count < 10:
+                    objects = 'Error Recieved - Try Again'
+                else:
+                    sys.stdout.write(
+                        'Error threshold exceeded exiting queueing\n'
+                    )
+                    sys.stdout.flush()
+                    objects = 'Error limit exceeded - exiting'
 
         del r
         del objects
