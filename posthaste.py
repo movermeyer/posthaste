@@ -463,6 +463,11 @@ class Posthaste(object):
                             print 'Thread %3s: uploading %s' % (thread,
                                                                 file['name'])
                         try:
+                            if file['size'] >= 5368709120:
+                                raise Exception('posthaste cannot currently '
+                                                'handle files greater than '
+                                                'the 5GB max file size for '
+                                                'OpenStack swift')
                             r = s.put('%s/%s/%s' %
                                       (self.endpoint,  container,  file['name']),
                                       data=f, headers={
