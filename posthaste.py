@@ -459,47 +459,45 @@ class Posthaste(object):
                     raise gevent.GreenletExit()
                 else:
                     with open(file['path'], 'rb') as f:
-                        body = f.read()
-                    if verbose > 1:
-                        print 'Thread %3s: uploading %s' % (thread,
-                                                            file['name'])
-                    try:
-                        r = s.put('%s/%s/%s' %
-                                  (self.endpoint,  container,  file['name']),
-                                  data=body, headers={
-                                      'X-Auth-Token': self.token
-                                  })
-                    except:
-                        e = sys.exc_info()[1]
-                        errors.append({
-                            'name': file['name'],
-                            'container': container,
-                            'exception': str(e)
-                        })
-                    else:
-                        if r.status_code == 401:
-                            raise AuthenticationError
-                        if r.status_code != 201:
-                            result = {
+                        if verbose > 1:
+                            print 'Thread %3s: uploading %s' % (thread,
+                                                                file['name'])
+                        try:
+                            r = s.put('%s/%s/%s' %
+                                      (self.endpoint,  container,  file['name']),
+                                      data=f, headers={
+                                          'X-Auth-Token': self.token
+                                      })
+                        except:
+                            e = sys.exc_info()[1]
+                            errors.append({
                                 'name': file['name'],
                                 'container': container,
-                                'status_code': r.status_code,
-                                'headers': dict(**r.headers)
-                            }
-                            try:
-                                result['response'] = json.loads(r.text)
-                            except ValueError:
-                                result['response'] = None
-                            errors.append(result)
-                            del result
-                        del r
-                    finally:
-                        if verbose > 1:
-                            print ('Thread %3s: upload complete for %s'
-                                   % (thread, file['name']))
-                        del f
-                        del body
-                    del file
+                                'exception': str(e)
+                            })
+                        else:
+                            if r.status_code == 401:
+                                raise AuthenticationError
+                            if r.status_code != 201:
+                                result = {
+                                    'name': file['name'],
+                                    'container': container,
+                                    'status_code': r.status_code,
+                                    'headers': dict(**r.headers)
+                                }
+                                try:
+                                    result['response'] = json.loads(r.text)
+                                except ValueError:
+                                    result['response'] = None
+                                errors.append(result)
+                                del result
+                            del r
+                        finally:
+                            if verbose > 1:
+                                print ('Thread %3s: upload complete for %s'
+                                       % (thread, file['name']))
+                            del f
+                        del file
 
         s = requests.Session()
 
@@ -548,6 +546,7 @@ class Posthaste(object):
                                 if not block:
                                     break
                                 f.write(block)
+                                f.flush()
                     except:
                         e = sys.exc_info()[1]
                         errors.append({
