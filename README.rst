@@ -87,7 +87,7 @@ Install - Centos 6.4
     python setup.py install
     cd ..
 
-    # test it - assuming you are using Rackspace Cloud Files
+    # test it 
     mkdir -p files
     cd files
     for num in {1..10}; do dd if=/dev/urandom of=./file${num} bs=1k count=4; done
