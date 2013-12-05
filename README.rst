@@ -73,6 +73,30 @@ Usage
                             verbosity. 1) Show Thread Start/Finish, 2) Show Object
                             Name.
 
+Install - Centos 6.4
+--------
+
+::
+
+    sudo su -
+    yum -y groupinstall "Development Tools"
+    yum -y install python-pip libevent libevent-devel python-devel wget
+    pip install virtualenv argparse gevent
+    git clone https://github.com/rackerlabs/posthaste
+    cd posthaste
+    python setup.py install
+    cd ..
+    exit
+
+    # test it 
+    mkdir -p files
+    cd files
+    for num in {1..10}; do dd if=/dev/urandom of=./file${num} bs=1k count=4; done
+    cd ..
+    posthaste --container testcontainer -r ORD -t 100  -i rackspace -u <your_USERNAME_here> -p  <your_API-KEY_here> -a https://identity.api.rackspacecloud.com/v2.0/ -v upload files/
+    posthaste --container testcontainer -r ORD -t 100  -i rackspace -u <your_USERNAME_here> -p  <your_API-KEY_here> -a https://identity.api.rackspacecloud.com/v2.0/ -v delete
+
+
 Examples
 --------
 
