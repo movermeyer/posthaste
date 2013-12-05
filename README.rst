@@ -87,13 +87,13 @@ Install - Centos 6.4
     python setup.py install
     cd ..
 
-    # test it
+    # test it - assuming you are using Rackspace Cloud Files
     mkdir -p files
     cd files
     for num in {1..10}; do dd if=/dev/urandom of=./file${num} bs=1k count=4; done
     cd ..
-    posthaste --container rax-test -r ORD -t 100  -i rackspace -u <USERNAME> -p  <API-KEY> -a https://identity.api.rackspacecloud.com/v2.0/ -v upload files/
-    posthaste --container rax-test -r ORD -t 100  -i rackspace -u <USERNAME> -p  <API-KEY> -a https://identity.api.rackspacecloud.com/v2.0/ -v delete
+    posthaste --container testcontainer -r ORD -t 100  -i rackspace -u <your_USERNAME_here> -p  <your_API-KEY_here> -a https://identity.api.rackspacecloud.com/v2.0/ -v upload files/
+    posthaste --container testcontainer -r ORD -t 100  -i rackspace -u <your_USERNAME_here> -p  <your_API-KEY_here> -a https://identity.api.rackspacecloud.com/v2.0/ -v delete
 
 
 Examples
