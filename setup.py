@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='posthaste',
-    version='0.2.2',
+    version='0.2.3',
     description=('Gevent-based, multithreaded tool for interacting with '
                  'OpenStack Swift and Rackspace Cloud Files'),
     long_description=open('README.rst').read(),
@@ -13,8 +13,8 @@ setuptools.setup(
     license='Apache License, Version 2.0',
     py_modules=['posthaste'],
     install_requires=[
-        'gevent>=0.13',
-        'requests>=1.2'
+        'gevent>=1.0',
+        'requests>=2.0'
     ],
     entry_points={
         'console_scripts': [
