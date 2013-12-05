@@ -86,6 +86,7 @@ Install - Centos 6.4
     cd posthaste
     python setup.py install
     cd ..
+    exit
 
     # test it 
     mkdir -p files
