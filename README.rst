@@ -13,13 +13,7 @@ Requirements
 ------------
 
 posthaste currently requires `gevent <http://www.gevent.org/>`_, which
-in turn requires `greenlet <https://pypi.python.org/pypi/greenlet>`_ and
-`libevent <http://libevent.org/>`_.
-
-The "new" Gevent (as of this writing, 1.0 RC 2) alleviates the libevent
-dependency and thus simplifies the process of using tool. More
-information can be found on
-`Github <https://github.com/surfly/gevent#installing-from-github>`_.
+in turn requires `greenlet <https://pypi.python.org/pypi/greenlet>`_.
 
 Usage
 -----
@@ -73,42 +67,61 @@ Usage
                             verbosity. 1) Show Thread Start/Finish, 2) Show Object
                             Name.
 
-Install - Centos 6.4
---------
+Installation
+------------
 
-::
+All instructions below utilize a Python virtual environment.  It is recommended that you do utilize individual virtual environments for any python module that has the potential of installing many dependencies that could affect other applications or your Operating System.
 
-    sudo su -
-    yum -y groupinstall "Development Tools"
-    yum -y install python-pip libevent libevent-devel python-devel wget
-    pip install virtualenv argparse gevent
-    git clone https://github.com/rackerlabs/posthaste
-    cd posthaste
-    python setup.py install
-    cd ..
-    exit
+Red Hat / CentOS / Fedora
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    # test it 
+*This will require at least Red Hat / CentOS 6 or newer, due to the dependency on python 2.6. You can get python 2.6 or newer on older OSes using 3rd part repositories or utilizing `pythonz <http://saghul.github.io/pythonz/>`_*
+
+.. code-block:: bash
+
+    sudo yum -y install gcc python-devel python-pip python-virtualenv python-argparse
+    virtualenv ~/posthaste
+    cd ~/posthaste
+    . bin/activate
+    pip install posthaste
+
+Ubuntu / Debian
+~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+    sudo apt-get -y install gcc python-dev python-pip python-virtualenv
+    virtualenv ~/posthaste
+    cd ~/posthaste
+    . bin/activate
+    pip install posthaste
+
+
+Testing
+~~~~~~~
+
+.. code-block:: bash
+
+    cd ~/posthaste
+    . bin/activate
     mkdir -p files
-    cd files
-    for num in {1..10}; do dd if=/dev/urandom of=./file${num} bs=1k count=4; done
-    cd ..
-    posthaste --container testcontainer -r ORD -t 100  -i rackspace -u <your_USERNAME_here> -p  <your_API-KEY_here> -a https://identity.api.rackspacecloud.com/v2.0/ -v upload files/
-    posthaste --container testcontainer -r ORD -t 100  -i rackspace -u <your_USERNAME_here> -p  <your_API-KEY_here> -a https://identity.api.rackspacecloud.com/v2.0/ -v delete
+    for num in {1..1000}; do dd if=/dev/urandom of=files/file${num} bs=1k count=4; done
+    posthaste -c testcontainer -r ORD -t 100 -u <your_USERNAME_here> -p <your_API-KEY_here> -vv upload files/
+    posthaste -c testcontainer -r ORD -t 100 -u <your_USERNAME_here> -p <your_API-KEY_here> -vv delete
 
 
 Examples
 --------
 
-::
+.. code-block:: bash
 
     posthaste -c example -r DFW -u $OS_USERNAME -p $OS_PASSWORD -t 100 upload /path/to/some/dir/
 
-::
+.. code-block:: bash
 
     posthaste -c example -r DFW -u $OS_USERNAME -p $OS_PASSWORD -t 100 download /path/to/some/dir/
 
-::
+.. code-block:: bash
 
     posthaste -c example -r DFW -u $OS_USERNAME -p $OS_PASSWORD -t 100 delete
 
