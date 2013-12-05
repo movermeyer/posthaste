@@ -75,7 +75,7 @@ All instructions below utilize a Python virtual environment.  It is recommended 
 Red Hat / CentOS / Fedora
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*This will require at least Red Hat / CentOS 6 or newer, due to the dependency on python 2.6. You can get python 2.6 or newer on older OSes using 3rd part repositories or utilizing `pythonz <http://saghul.github.io/pythonz/>`_*
+**Note:** This will require at least Red Hat / CentOS 6 or newer, due to the dependency on python 2.6. You can get python 2.6 or newer on older OSes using 3rd part repositories or utilizing `pythonz <http://saghul.github.io/pythonz/>`_.
 
 .. code-block:: bash
 
