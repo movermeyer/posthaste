@@ -31,6 +31,7 @@ import time
 import threading
 
 __version__ = '0.2.2'
+__user_agent__ = "posthaste v{version}".format(version=__version__)
 
 
 def handle_args():
@@ -172,7 +173,8 @@ class Posthaste(object):
 
         headers = {
             'Accept': 'application/json',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'User-Agent': __user_agent__
         }
 
         r = requests.post(auth_url, data=json.dumps(auth_data),
@@ -244,7 +246,8 @@ class Posthaste(object):
             sys.stdout.flush()
         headers = {
             'Accept': 'application/json',
-            'X-Auth-Token': self.token
+            'X-Auth-Token': self.token,
+            'User-Agent': __user_agent__
         }
 
         r = requests.get('%s/%s?format=json' % (self.endpoint, container),
@@ -278,7 +281,8 @@ class Posthaste(object):
 
         headers = {
             'Accept': 'application/json',
-            'X-Auth-Token': self.token
+            'X-Auth-Token': self.token,
+            'User-Agent': __user_agent__
         }
 
         marker = self._initial_marker
@@ -403,7 +407,10 @@ class Posthaste(object):
                     try:
                         r = s.delete('%s/%s/%s' %
                                      (self.endpoint, container, f),
-                                     headers={'X-Auth-Token': self.token})
+                                     headers={
+                                              'X-Auth-Token': self.token,
+                                              'User-Agent': __user_agent__
+                                     })
                     except:
                         e = sys.exc_info()[1]
                         errors.append({
@@ -471,7 +478,8 @@ class Posthaste(object):
                             r = s.put('%s/%s/%s' %
                                       (self.endpoint,  container,  file['name']),
                                       data=f, headers={
-                                          'X-Auth-Token': self.token
+                                          'X-Auth-Token': self.token,
+                                          'User-Agent': __user_agent__
                                       })
                         except:
                             e = sys.exc_info()[1]
@@ -543,7 +551,8 @@ class Posthaste(object):
                                                     container,
                                                     filename),
                                       headers={
-                                          'X-Auth-Token': self.token
+                                          'X-Auth-Token': self.token,
+                                          'User-Agent': __user_agent__
                                       }, stream=True)
                             if r.status_code == 401:
                                 raise AuthenticationError
