@@ -34,8 +34,6 @@ import time
 
 __version__ = '0.2.2'
 
-FONTS_REGEX = r'.*\.(eot|otf|woff|ttf)$'
-
 HEADER_PAIR_FORMAT = '"<file_name_regex>,<header_name>:<header_value>"'
 
 
@@ -48,7 +46,7 @@ def regex_header_pair(string):
         return (regex, header_name, header_value)
     except:
         raise argparse.ArgumentTypeError(
-            'Headers must be specified in the format: ' + HEADER_PAIR_FORMAT
+            'Headers must be specified in the format: %s' % HEADER_PAIR_FORMAT
         )
 
 
