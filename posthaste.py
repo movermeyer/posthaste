@@ -14,7 +14,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-
 import gevent
 from gevent import monkey
 monkey.patch_all()
@@ -25,12 +24,15 @@ import sys
 import json
 import os
 import argparse
+import re
 import requests
 import functools
 import time
 import threading
 
 __version__ = '0.2.2'
+
+FONTS_REGEX = r'.*\.(eot|otf|woff|ttf)$'
 
 
 def handle_args():
@@ -340,11 +342,18 @@ class Posthaste(object):
                         print 'Thread %3s: uploading %s' % (thread,
                                                             file['name'])
                     try:
+                        file_headers = {
+                            'X-Auth-Token': self.token,
+                        }
+
+                        # TODO: do not use constant pattern, allow the user
+                        # to pass a parameter from the shell
+                        if re.match(FONTS_REGEX, file['name']):
+                            file_headers['Access-Control-Allow-Origin'] = '*'
+
                         r = s.put('%s/%s/%s' %
                                   (self.endpoint,  container,  file['name']),
-                                  data=body, headers={
-                                      'X-Auth-Token': self.token
-                                  })
+                                  data=body, headers=file_headers)
                     except:
                         e = sys.exc_info()[1]
                         errors.append({
