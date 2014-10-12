@@ -74,7 +74,7 @@ Usage
                             Name.
       -H, --headers <file_name_regex>,<header_name>:<header_value>
                             Set headers returned by RackSpace when serving files matching
-                            a specified regex.
+                            a specified regular expression.
 
 Examples
 --------
