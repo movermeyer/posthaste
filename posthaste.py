@@ -14,24 +14,41 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-
 import gevent
 from gevent import monkey
 monkey.patch_all()
 from gevent.pool import Pool
 from gevent.queue import Queue
 
-import sys
+import argparse
+from collections import defaultdict
+import functools
 import json
 import os
-import argparse
+import re
 import requests
-import functools
-import time
+import sys
 import threading
+import time
+
 
 __version__ = '0.2.2'
 __user_agent__ = "posthaste v{version}".format(version=__version__)
+
+HEADER_PAIR_FORMAT = '"<file_name_regex>,<header_name>:<header_value>"'
+
+
+def regex_header_pair(string):
+    try:
+        regex, header_string = string.split(',')
+        # Just split header name and value and make it a dictionary
+        header_name, header_value = header_string.split(':')
+
+        return (regex, header_name, header_value)
+    except:
+        raise argparse.ArgumentTypeError(
+            'Headers must be specified in the format: %s' % HEADER_PAIR_FORMAT
+        )
 
 
 def handle_args():
@@ -96,6 +113,10 @@ def handle_args():
                                    help='Upload files to specified container')
     upload.set_defaults(action='upload')
     upload.add_argument('directory', help='The directory to upload')
+    upload.add_argument('-H', '--headers', required=False,
+                        type=regex_header_pair, action='append',
+                        help='Add headers to files matching a specified regex. '
+                             'Format: %s' % HEADER_PAIR_FORMAT)
 
     download = subparsers.add_parser('download',
                                      help='Download files to specified '
@@ -106,6 +127,7 @@ def handle_args():
                           help='The directory to download files to')
 
     args = parser.parse_args()
+
     return args
 
 
@@ -451,7 +473,7 @@ class Posthaste(object):
         pool.join()
         return errors
 
-    def handle_upload(self, directory, container, threads, verbose):
+    def handle_upload(self, directory, container, threads, verbose, headers):
         @self.requires_auth
         def _upload(thread, queue, errors):
             if verbose:
@@ -467,27 +489,33 @@ class Posthaste(object):
                     raise gevent.GreenletExit()
                 else:
                     with open(file['path'], 'rb') as f:
-                        if verbose > 1:
-                            print 'Thread %3s: uploading %s' % (thread,
-                                                                file['name'])
-                        try:
-                            if file['size'] >= 5368709120:
-                                raise Exception('posthaste cannot currently '
-                                                'handle files greater than '
-                                                'the 5GB max file size for '
-                                                'OpenStack swift')
-                            r = s.put(
-                                '%s/%s/%s' % (
-                                    self.endpoint, container, file['name']
-                                ),
-                                data=f,
-                                headers={
-                                    'X-Auth-Token': self.token,
-                                    'User-Agent': __user_agent__
-                                }
-                            )
-                        except:
-                            e = sys.exc_info()[1]
+                        body = f.read()
+                    if verbose > 1:
+                        print 'Thread %3s: uploading %s' % (thread,
+                                                            file['name'])
+                    try:
+                        file_headers = {
+                            'X-Auth-Token': self.token,
+                        }
+
+                        for regex, header_dict in headers.items():
+                            if re.match(regex, file['name']):
+                                file_headers.update(header_dict)
+
+                        r = s.put('%s/%s/%s' %
+                                  (self.endpoint,  container,  file['name']),
+                                  data=body, headers=file_headers)
+                    except:
+                        e = sys.exc_info()[1]
+                        errors.append({
+                            'name': file['name'],
+                            'container': container,
+                            'exception': str(e)
+                        })
+                    else:
+                        if r.status_code == 401:
+                            raise AuthenticationError
+                        if r.status_code != 201:
                             errors.append({
                                 'name': file['name'],
                                 'container': container,
@@ -510,12 +538,12 @@ class Posthaste(object):
                                 errors.append(result)
                                 del result
                             del r
-                        finally:
-                            if verbose > 1:
-                                print ('Thread %3s: upload complete for %s'
-                                       % (thread, file['name']))
-                            del f
-                        del file
+                    finally:
+                        if verbose > 1:
+                            print ('Thread %3s: upload complete for %s'
+                                   % (thread, file['name']))
+                        del f
+                    del file
 
         s = requests.Session()
 
@@ -612,9 +640,15 @@ def shell():
     args = handle_args()
     posthaste = Posthaste(args)
     if args.action == 'upload':
+        # Zip the regex-headers pairs in a single dict and pass it to
+        # the upload handler
+        headers = defaultdict(dict)
+        for regex, header_name, header_value in args.headers:
+            headers[regex][header_name] = header_value
+
         posthaste.get_files(args.directory, args.verbose)
         errors = posthaste.handle_upload(args.directory, args.container,
-                                         args.threads, args.verbose)
+                                         args.threads, args.verbose, headers)
     elif args.action == 'download':
         posthaste.get_initial_objects(args.container, args.verbose)
         gevent.Greenlet.spawn(posthaste.get_remaining_objects, args.container,
