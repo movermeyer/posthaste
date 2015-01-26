@@ -325,14 +325,14 @@ class Posthaste(object):
                         'Current queue size: %d\n' % self._queue.qsize()
                     )
                     sys.stdout.flush()
-                
+
                 display_count = False
                 while self._queue.qsize() > queue_max_size:
                     if verbose:
                         if display_count:
                             sys.stdout.write(
-                                'Current queue size: %d\n' % \
-                                self._queue.qsize()
+                                'Current queue size: %d\n'
+                                '' % self._queue.qsize()
                             )
                             sys.stdout.flush()
                         else:
@@ -405,12 +405,13 @@ class Posthaste(object):
                     if verbose > 1:
                         print 'Thread %3s: deleting %s' % (i, f)
                     try:
-                        r = s.delete('%s/%s/%s' %
-                                     (self.endpoint, container, f),
-                                     headers={
-                                              'X-Auth-Token': self.token,
-                                              'User-Agent': __user_agent__
-                                     })
+                        r = s.delete(
+                            '%s/%s/%s' % (self.endpoint, container, f),
+                            headers={
+                                'X-Auth-Token': self.token,
+                                'User-Agent': __user_agent__
+                            }
+                        )
                     except:
                         e = sys.exc_info()[1]
                         errors.append({
@@ -475,12 +476,16 @@ class Posthaste(object):
                                                 'handle files greater than '
                                                 'the 5GB max file size for '
                                                 'OpenStack swift')
-                            r = s.put('%s/%s/%s' %
-                                      (self.endpoint,  container,  file['name']),
-                                      data=f, headers={
-                                          'X-Auth-Token': self.token,
-                                          'User-Agent': __user_agent__
-                                      })
+                            r = s.put(
+                                '%s/%s/%s' % (
+                                    self.endpoint, container, file['name']
+                                ),
+                                data=f,
+                                headers={
+                                    'X-Auth-Token': self.token,
+                                    'User-Agent': __user_agent__
+                                }
+                            )
                         except:
                             e = sys.exc_info()[1]
                             errors.append({
@@ -547,13 +552,16 @@ class Posthaste(object):
                             if e.errno != 17:
                                 raise
                         with open(path, 'wb+') as f:
-                            r = s.get('%s/%s/%s' % (self.endpoint,
-                                                    container,
-                                                    filename),
-                                      headers={
-                                          'X-Auth-Token': self.token,
-                                          'User-Agent': __user_agent__
-                                      }, stream=True)
+                            r = s.get(
+                                '%s/%s/%s' % (
+                                    self.endpoint, container, filename
+                                ),
+                                headers={
+                                    'X-Auth-Token': self.token,
+                                    'User-Agent': __user_agent__
+                                },
+                                stream=True
+                            )
                             if r.status_code == 401:
                                 raise AuthenticationError
                             for block in r.iter_content(4096):
