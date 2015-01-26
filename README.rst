@@ -24,17 +24,17 @@ Usage
                      [-t THREADS] [-u USERNAME] [-p PASSWORD]
                      [-i {rackspace,keystone}] [-a AUTH_URL] [-v]
                      {delete,upload,download} ...
-
+    
     Gevent-based, multithreaded tool for interacting with OpenStack Swift and
     Rackspace Cloud Files
-
+    
     positional arguments:
       {delete,upload,download}
         delete              Delete files from specified container
         upload              Upload files to specified container
         download            Download files to specified directory from the
                             specified container
-
+    
     optional arguments:
       -h, --help            show this help message and exit
       --version             show program's version number and exit
@@ -66,9 +66,6 @@ Usage
       -v, --verbose         Enable verbosity. Supply multiple times for additional
                             verbosity. 1) Show Thread Start/Finish, 2) Show Object
                             Name.
-      -H, --headers <file_name_regex>,<header_name>:<header_value>
-                            Set headers returned by RackSpace when serving files matching
-                            a specified regular expression.
 
 Installation
 ------------
@@ -128,6 +125,3 @@ Examples
 
     posthaste -c example -r DFW -u $OS_USERNAME -p $OS_PASSWORD -t 100 delete
 
-Grand access to webfonts across different domains:
-::
-    posthaste -c example -r DFW -u $OS_USERNAME -p $OS_PASSWORD -t 100 upload /path/to/some/dir/ -H ".*\.(eot|otf|woff|ttf)$,Access-Control-Allow-Origin:*"
