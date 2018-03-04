@@ -4,9 +4,9 @@ posthaste
 OpenStack Swift threaded operation utility for Uploading, Downloading
 and Deleting
 
-.. image:: https://pypip.in/v/posthaste/badge.png
+.. image:: https://img.shields.io/pypi/v/posthaste.svg
         :target: https://crate.io/packages/posthaste
-.. image:: https://pypip.in/d/posthaste/badge.png
+.. image:: https://img.shields.io/pypi/dm/posthaste.svg
         :target: https://crate.io/packages/posthaste
 
 Requirements
